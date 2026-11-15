@@ -1,0 +1,3366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GB-8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --nes-bg: #0F1A0F;
+            --nes-panel: #1B2B18;
+            --nes-border: #5A7348;
+            --nes-red: #9BBC0F;
+            --nes-text: #E0F0C8;
+            --nes-blue: #8BAC0F;
+            --nes-green: #9BBC0F;
+            --nes-orange: #C4D64A;
+            --nes-magenta: #9B2257;
+            --nes-cyan: #76B852;
+            --solo-yellow: #E5E84C;
+        }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Press Start 2P', monospace; 
+            background: var(--nes-bg); 
+            color: var(--nes-text); 
+            margin: 0; 
+            padding: 20px; 
+            user-select: none; 
+            font-size: 10px;
+        }
+        .app-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        h1 { 
+            text-align: center; 
+            color: var(--nes-red); 
+            text-transform: uppercase; 
+            margin: 0; 
+            font-size: 24px;
+            text-shadow: 4px 4px 0px #306230, -1px -1px 0px #C8E64C;
+        }
+        .header-settings-btn {
+            background: #000;
+            color: var(--nes-border);
+            border: 2px solid var(--nes-border);
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .header-settings-btn:hover,
+        .header-settings-btn.active {
+            color: #fff;
+            border-color: var(--nes-red);
+            background: #1a1a1a;
+        }
+        .header-settings-btn svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+            fill: currentColor;
+        }
+        
+        /* Mode Switcher Banner (Hidden by Default) */
+        .mode-banner {
+            display: none;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .mode-banner.visible {
+            display: flex;
+        }
+        .mode-btn {
+            background: #000;
+            color: var(--nes-text);
+            border: 4px solid var(--nes-border);
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: var(--nes-red);
+            border-color: #fff;
+            color: #fff;
+            box-shadow: 4px 4px 0px rgba(155, 188, 15, 0.45);
+        }
+
+        .layout { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
+            gap: 20px; 
+            max-width: 1500px; 
+            margin: 0 auto; 
+        }
+        .panel { 
+            background: var(--nes-panel); 
+            border: 4px solid var(--nes-border); 
+            padding: 15px; 
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        h2 { 
+            font-size: 12px; 
+            color: var(--nes-text); 
+            margin-top: 0; 
+            border-bottom: 2px dashed var(--nes-border); 
+            padding-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            line-height: 1.5;
+        }
+        .sq1-color { color: var(--nes-red); }
+        .sq2-color { color: var(--nes-orange); }
+        .sq3-color { color: var(--nes-magenta); }
+        .tri-color { color: var(--nes-green); }
+        .mel-color { color: var(--nes-cyan); }
+        
+        .top-link {
+            color: var(--nes-border);
+            text-decoration: none;
+            font-size: 8px;
+            transition: 0.2s;
+            padding: 4px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .top-link:hover {
+            color: #fff;
+            border-color: #fff;
+            background: #222;
+        }
+        .top-play-toggle {
+            background: transparent;
+            color: var(--nes-green);
+            font-family: inherit;
+            font-size: 8px;
+            line-height: 1.5;
+            transition: 0.2s;
+            padding: 4px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .top-play-toggle:hover {
+            color: #fff;
+            border-color: #fff;
+            background: #222;
+        }
+        .top-play-toggle.playing {
+            color: var(--nes-red);
+            border-color: var(--nes-red);
+        }
+        .top-play-toggle.playing:hover {
+            color: #fff;
+            border-color: #fff;
+            background: #222;
+        }
+
+        .control-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .knob { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: #000; 
+            padding: 10px; 
+            border: 2px solid #444; 
+            flex: 1; 
+            min-width: 80px;
+        }
+        .knob label { 
+            font-size: 8px; 
+            color: #aaa; 
+            margin-bottom: 10px; 
+            text-align: center; 
+            line-height: 1.2;
+        }
+        input[type="range"] { 
+            width: 100%; 
+            cursor: pointer; 
+            accent-color: var(--nes-red);
+        }
+        select, button, input[type="text"] { 
+            background: #000; 
+            color: var(--nes-text); 
+            border: 2px solid var(--nes-border); 
+            padding: 8px 10px; 
+            font-family: inherit; 
+            font-size: 9px; 
+            cursor: pointer; 
+            outline: none; 
+        }
+        input[type="text"] { cursor: text; }
+        select:focus, button:hover, input[type="text"]:focus { 
+            border-color: var(--nes-red); 
+            color: var(--nes-red);
+        }
+        button:active { transform: translate(2px, 2px); }
+
+        /* Sequencer Grid Base */
+        .seq-block {
+            display: flex;
+            flex-direction: column;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .seq-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 5px;
+        }
+        .seq-grid { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto; 
+            overflow-y: hidden;
+            background: #141414;
+            border: 2px solid #333;
+            padding: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #111;
+        }
+        .seq-grid::-webkit-scrollbar { height: 6px; }
+        .seq-grid::-webkit-scrollbar-track { background: #111; }
+        .seq-grid::-webkit-scrollbar-thumb { background: #444; border: 1px solid #222; }
+        .seq-grid::-webkit-scrollbar-thumb:hover { background: #666; }
+        .seq-row { 
+            display: grid; 
+            align-items: center; 
+            gap: 5px; 
+            grid-template-columns: 52px repeat(var(--steps, 16), minmax(24px, 32px)); 
+        }
+        .seq-label { 
+            font-size: 8px; 
+            color: #bbb; 
+            text-align: right; 
+            padding-right: 8px; 
+            white-space: nowrap; 
+            position: sticky;
+            left: 0;
+            background: #141414;
+            z-index: 2;
+        }
+        .step { 
+            box-sizing: border-box;
+            width: 100%; 
+            height: 24px; 
+            background: #050505; 
+            border: 2px solid #383838; 
+            cursor: pointer; 
+            transition: border-color 0.08s, transform 0.06s;
+        }
+        /* Subtle alternating 4-step beat group shading without breaking grid alignment */
+        .seq-row > .step:nth-child(8n + 6),
+        .seq-row > .step:nth-child(8n + 7),
+        .seq-row > .step:nth-child(8n + 8),
+        .seq-row > .step:nth-child(8n + 9) {
+            background: #101010;
+        }
+        .seq-row > .step:nth-child(4n + 2) {
+            border-left-color: #555;
+        }
+        .step:hover { border-color: #999; }
+        .step.active { background: var(--nes-red) !important; border-color: #fff !important; }
+        .step.playing { background: #fff !important; border-color: #fff !important; transform: scale(1.06); z-index: 1; }
+        .mel-step.active { background: var(--nes-cyan) !important; }
+        .bass-step.active { background: var(--nes-green) !important; }
+        .arp-step.active { background: var(--nes-red) !important; }
+        .poly-step.active { background: var(--nes-orange) !important; }
+        .noise-step.active { background: var(--nes-magenta) !important; }
+
+        /* Master Controls */
+        .transport { 
+            grid-column: 1 / -1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #000; 
+            border: 4px solid var(--nes-red); 
+            padding: 15px 20px; 
+            box-shadow: 6px 6px 0px rgba(248, 56, 0, 0.4);
+            gap: 20px;
+        }
+        
+        .transport-btns { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap;}
+        .transport-btns button {
+            background: #000; 
+            font-size: 14px; 
+            padding: 15px 20px;
+            border: 4px solid;
+            cursor: pointer;
+        }
+        #playBtn { border-color: var(--nes-green); color: var(--nes-green); }
+        #playBtn.active { background: var(--nes-red); color: #fff; }
+        #stopBtn { border-color: var(--nes-orange); color: var(--nes-orange); }
+        #stopBtn:active { background: var(--nes-orange); color: #fff; }
+        .step-btn-group { display: inline-flex; flex-wrap: nowrap; gap: 10px; align-items: stretch; }
+        #stepBackBtn, #stepFwdBtn { border-color: var(--nes-blue); color: var(--nes-blue); padding: 15px 15px; font-size: 10px; white-space: nowrap; }
+        #stepBackBtn:active, #stepFwdBtn:active { background: var(--nes-blue); color: #fff; }
+
+        /* Mixer */
+        .mixer-layout { display: flex; justify-content: space-between; align-items: stretch; padding: 10px; flex-wrap: wrap; gap: 15px; }
+        .mixer-strip { 
+            flex: 1; 
+            min-width: 60px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between;
+            gap: 8px; 
+            background: #111; 
+            padding: 15px 10px; 
+            border: 2px solid var(--nes-border); 
+        }
+        .strip-label { 
+            font-size: 10px; 
+            line-height: 1.2;
+            min-height: 2.4em;
+            text-align: center; 
+            margin-bottom: 5px; 
+            text-decoration: none; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .strip-label:hover { color: #fff; text-shadow: 0 0 5px #fff; }
+        .solo-btn { width: 90%; font-size: 8px; background: #222; padding: 8px 0; border: 2px solid #555; color: #888;}
+        .solo-btn.active { background: var(--solo-yellow); color: #000; border-color: #fff; }
+        .mute-btn { width: 90%; font-size: 8px; background: #333; padding: 8px 0; border: 2px solid #555; color: #888;}
+        .mute-btn.muted { background: var(--nes-red); color: #fff; border-color: #fff; }
+        input[type="range"].fader { 
+            -webkit-appearance: slider-vertical; 
+            width: 25px; 
+            height: 120px; 
+            min-height: 120px;
+            max-height: 120px;
+            flex: 0 0 120px;
+            background: #000; 
+            margin-top: 10px;
+        }
+        
+        /* Drum Channel Section Dropdown / Collapsible */
+        .drum-channel-panel { background: #151515; border: 2px solid #444; padding: 10px; margin-top: 10px; }
+        .drum-channel-sliders { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; margin-top: 10px; }
+        .drum-slider-strip { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 45px; background: #000; padding: 8px 4px; border: 1px solid #333; }
+        .drum-slider-strip label { font-size: 7px; color: #aaa; margin-bottom: 6px; text-align: center; }
+        .drum-slider-strip input[type="range"] { -webkit-appearance: slider-vertical; width: 20px; height: 80px; }
+
+        canvas { width: 100%; height: 100px; background: #000; border: 4px solid var(--nes-border); margin-top: 15px; image-rendering: pixelated;}
+        
+        /* Song Progression UI */
+        .prog-block, .chord-block { 
+            background: #000; 
+            border: 2px solid var(--nes-border); 
+            padding: 8px 12px; 
+            font-size: 9px; 
+            cursor: pointer;
+            transition: 0.1s;
+            position: relative; 
+        }
+        .prog-block:hover, .chord-block:hover { border-color: #fff; color: #fff;}
+        .chord-block { color: var(--nes-blue); border-color: var(--nes-blue); cursor: grab; touch-action: none; }
+        .chord-block:active { cursor: grabbing; }
+        
+        .prog-block .remove-btn, .chord-block .remove-btn { 
+            position: absolute; top: -8px; right: -8px; background: #000; border: 1px solid #fff; 
+            color: #fff; font-size: 6px; padding: 2px 4px; cursor: pointer; display: none;
+        }
+        .prog-block:hover .remove-btn, .chord-block:hover .remove-btn { display: block; }
+        .prog-block .remove-btn { color: var(--nes-red); } 
+        
+        .song-timeline-block { color: var(--nes-orange); border-color: var(--nes-orange); cursor: grab; }
+        .song-timeline-block:active { cursor: grabbing; }
+        .song-timeline-block:hover { border-color: #fff; } 
+        .song-timeline-block.playing, .chord-block.playing { background: #fff; color: #000; transform: scale(1.1); }
+        
+        .loop-btn { border-color: #555; color: #888; font-size: 10px; padding: 4px 6px; margin-right: 10px;}
+        .loop-btn.active { border-color: var(--solo-yellow); color: var(--solo-yellow); background: #330;}
+        .minmax-btn, .toggle-drums-btn, .toggle-arp-btn, .toggle-bass-btn, .dup-part-btn { padding: 4px 8px; font-size: 10px;}
+
+        /* Minimal Track Mute & FX Toggles on Song Parts */
+        .part-track-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #111;
+            padding: 4px 8px;
+            border: 1px solid #444;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .part-tracks-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-right: 10px;
+        }
+        .track-group {
+            display: flex;
+            align-items: center;
+            background: #000;
+            border: 1px solid #333;
+            padding: 2px 4px;
+            gap: 3px;
+        }
+        .track-toggle-item {
+            font-size: 8px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border: 1px solid #333;
+            white-space: nowrap;
+        }
+        .track-toggle-item.checked { color: var(--nes-green); border-color: var(--nes-green); background: #020; }
+        .track-toggle-item.muted { color: var(--nes-red); border-color: var(--nes-red); background: #200; }
+
+        .fx-icon-btn {
+            font-size: 7px;
+            cursor: pointer;
+            padding: 2px 3px;
+            border: 1px solid #444;
+            background: #000;
+            color: #777;
+        }
+        .fx-icon-btn.active {
+            color: #000;
+            background: var(--nes-green);
+            border-color: #fff;
+            box-shadow: 0 0 4px var(--nes-green);
+        }
+
+        /* FX Section Styles */
+        .fx-module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .fx-card {
+            background: #151515;
+            border: 2px solid #444;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .fx-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #444;
+            padding-bottom: 6px;
+            font-size: 9px;
+            color: var(--nes-cyan);
+        }
+        .fx-tweaks-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        .fx-mix-row {
+            background: #000;
+            border: 2px solid #333;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .fx-mix-row label {
+            font-size: 7px;
+            color: var(--nes-cyan);
+            text-align: center;
+        }
+
+        #emptyStateMsg { padding: 20px; border: 2px dashed #555; color: #888; text-align: center; margin: 10px 0; width: 100%;}
+
+        /* Performance Mode Styles */
+        .perf-container {
+            display: none;
+            grid-column: 1 / -1;
+            gap: 20px;
+        }
+        .perf-container.active {
+            display: grid;
+        }
+        .studio-container.hidden {
+            display: none;
+        }
+
+        .mpc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .mpc-pad {
+            background: #151515;
+            border: 4px solid var(--nes-border);
+            border-radius: 4px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            color: var(--nes-text);
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            transition: 0.05s;
+        }
+        .mpc-pad:active, .mpc-pad.triggered {
+            background: var(--nes-red);
+            border-color: #fff;
+            color: #fff;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .keyboard-wrapper {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .piano-key {
+            background: #fff;
+            color: #000;
+            width: 36px;
+            height: 140px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+            font-size: 8px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+        .piano-key.black {
+            background: #222;
+            color: #fff;
+            width: 24px;
+            height: 85px;
+            margin-left: -14px;
+            margin-right: -14px;
+            z-index: 2;
+            border-color: #000;
+        }
+        .piano-key:active, .piano-key.triggered {
+            background: var(--nes-cyan) !important;
+            color: #000 !important;
+        }
+
+        .perf-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #000;
+            border: 2px solid var(--nes-border);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>GB-8</h1>
+    <button type="button" class="header-settings-btn" id="toggleModeBannerBtn" title="Toggle Mode Selector" aria-label="Toggle Mode Selector" aria-expanded="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M6 1h4v2h1.5l1.4-1.4 2.1 2.1L13.6 5v1h2v4h-2v1l1.4 1.3-2.1 2.1L11.5 13H10v2H6v-2H4.5l-1.4 1.4-2.1-2.1L2.4 11v-1h-2V6h2V5L1 3.7l2.1-2.1L4.5 3H6V1zm0 5v4h4V6H6z"/>
+        </svg>
+    </button>
+</div>
+
+<!-- Mode Selector Banner -->
+<div class="mode-banner" id="modeBanner">
+    <button class="mode-btn active" id="btnStudioMode">STUDIO & SONG MODE</button>
+    <button class="mode-btn" id="btnPerfMode">PERFORMANCE & MPC MODE</button>
+</div>
+
+<!-- STUDIO / SONG VIEW -->
+<div class="layout studio-container" id="studioContainer">
+    <!-- Live Mixer -->
+    <div class="panel" id="panel_mixer" style="grid-column: 1 / -1;">
+        <h2>
+            <span style="color:#fff;">CONSOLE MIXER</span>
+            <button id="toggleMixerPanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+        </h2>
+        <div id="mixerPanelContainer">
+        <div class="mixer-layout">
+            <div class="mixer-strip">
+                <span class="strip-label" style="color:#fff">01 DRUM</span>
+                <button class="solo-btn" data-track="noi">SOLO</button><button class="mute-btn" data-track="noi">MUTE</button>
+                <input type="range" id="noi_vol" class="fader" min="0" max="1.5" step="0.01" value="1.5">
+            </div>
+            <div class="mixer-strip">
+                <a href="#panel_tri" class="strip-label tri-color">02 BASS</a>
+                <button class="solo-btn" data-track="tri">SOLO</button><button class="mute-btn" data-track="tri">MUTE</button>
+                <input type="range" id="tri_vol" class="fader" min="0" max="1.2" step="0.01" value="1.14">
+            </div>
+            <div class="mixer-strip">
+                <a href="#panel_mel" class="strip-label mel-color">03 MELO</a>
+                <button class="solo-btn" data-track="mel">SOLO</button><button class="mute-btn" data-track="mel">MUTE</button>
+                <input type="range" id="mel_vol" class="fader" min="0" max="1.2" step="0.01" value="0.34">
+            </div>
+            <div class="mixer-strip">
+                <a href="#panel_sq1" class="strip-label sq1-color">04 MONO</a>
+                <button class="solo-btn" data-track="sq1">SOLO</button><button class="mute-btn" data-track="sq1">MUTE</button>
+                <input type="range" id="sq1_vol" class="fader" min="0" max="1.2" step="0.01" value="0.25">
+            </div>
+            <div class="mixer-strip">
+                <a href="#panel_sq2" class="strip-label sq2-color">05 POLY</a>
+                <button class="solo-btn" data-track="sq2">SOLO</button><button class="mute-btn" data-track="sq2">MUTE</button>
+                <input type="range" id="sq2_vol" class="fader" min="0" max="1.2" step="0.01" value="0.28">
+            </div>
+            <div class="mixer-strip">
+                <a href="#panel_sq3" class="strip-label sq3-color">06 NOISE</a>
+                <button class="solo-btn" data-track="sq3">SOLO</button><button class="mute-btn" data-track="sq3">MUTE</button>
+                <input type="range" id="sq3_vol" class="fader" min="0" max="1.2" step="0.01" value="1.0">
+            </div>
+        </div>
+
+        <!-- Master Volume Slider -->
+        <div style="background: #151515; border: 2px solid #444; padding: 10px; margin-top: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label for="masterVol" style="font-size:9px; color:#aaa;">MASTER VOL</label>
+                <span id="masterVolVal" style="font-size:9px; color:var(--nes-text);">70%</span>
+            </div>
+            <input type="range" id="masterVol" min="0" max="1" step="0.01" value="0.7" style="width:100%;">
+        </div>
+
+        <!-- Track 1 Drum Channel Sub-Sliders (Minimized by Default) -->
+        <div class="drum-channel-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:9px; color:#aaa;">01 DRUM CHANNEL INDIVIDUAL VOLUMES</span>
+                <button id="toggleDrumSlidersBtn" style="font-size:8px; padding:2px 6px;">+ EXPAND DRUM VOLUMES</button>
+            </div>
+            <div id="drumSlidersContainer" class="drum-channel-sliders" style="display:none;">
+                <div class="drum-slider-strip"><label>KCK</label><input type="range" class="drum-fader" data-drum="kick" min="0" max="1.5" step="0.01" value="1.1"></div>
+                <div class="drum-slider-strip"><label>SNR</label><input type="range" class="drum-fader" data-drum="snare" min="0" max="1.5" step="0.01" value="0.76"></div>
+                <div class="drum-slider-strip"><label>HAT</label><input type="range" class="drum-fader" data-drum="hat" min="0" max="1.5" step="0.01" value="0.8"></div>
+                <div class="drum-slider-strip"><label>OHAT</label><input type="range" class="drum-fader" data-drum="openhat" min="0" max="1.5" step="0.01" value="0.8"></div>
+                <div class="drum-slider-strip"><label>CLP</label><input type="range" class="drum-fader" data-drum="clap" min="0" max="1.5" step="0.01" value="1.0"></div>
+                <div class="drum-slider-strip"><label>RIM</label><input type="range" class="drum-fader" data-drum="rim" min="0" max="1.5" step="0.01" value="0.9"></div>
+                <div class="drum-slider-strip"><label>TOM</label><input type="range" class="drum-fader" data-drum="tom" min="0" max="1.5" step="0.01" value="1.1"></div>
+                <div class="drum-slider-strip"><label>ZAP</label><input type="range" class="drum-fader" data-drum="zap" min="0" max="1.5" step="0.01" value="0.8"></div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Transport -->
+    <div class="transport">
+        <div class="transport-btns" style="justify-content: center; gap: 15px;">
+            <button id="playBtn">PLAY</button>
+            <button id="stopBtn">STOP</button>
+            <div class="step-btn-group">
+                <button id="stepBackBtn">&lt; STEP</button>
+                <button id="stepFwdBtn">STEP &gt;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master Song Progression -->
+    <div class="panel" style="grid-column: 1 / -1;">
+        <h2><span style="color:var(--nes-orange);">SONG STRUCTURE</span> <button id="clearSongBtn" style="font-size: 8px;">CLEAR</button></h2>
+        
+        <div id="song_timeline" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; min-height: 45px; border: 2px dashed #444; padding: 10px; margin-bottom: 15px;">
+            <!-- Sequence Blocks -->
+        </div>
+
+        <div style="font-size:8px; margin-bottom:10px; color:#aaa;">PART POOL (CLICK TO APPEND TO SONG)</div>
+        <div id="part_pool" style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;"></div>
+        
+        <div style="display:flex; gap: 10px; align-items: center; border-top: 1px dashed #444; padding-top: 15px;">
+            <input type="text" id="new_part_name" placeholder="E.g. Chorus" value="Verse" style="width: 150px;">
+            <button id="create_part_btn" style="color:var(--nes-green); border-color:var(--nes-green);">+ CREATE SONG PART</button>
+        </div>
+    </div>
+
+    <!-- Song Parts Container -->
+    <div id="parts_container" style="grid-column: 1 / -1; display:flex; flex-direction:column; gap:20px;">
+        <!-- Dynamically injected panels -->
+    </div>
+    
+    <!-- Synth Instruments (Minimized by Default) -->
+    <div class="panel" style="grid-column: 1 / -1;" id="panel_synth_controls">
+        <h2>
+            <span style="color:#fff;">SYNTHS</span>
+            <button id="toggleSynthControlsBtn" style="font-size:8px; padding:2px 6px;">+</button>
+        </h2>
+        <div id="synthControlsContainer" style="display:none; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 15px;">
+    <!-- Synth Instruments -->
+    <!-- Bass Synthesizer Controls -->
+    <div class="panel" id="panel_tri" style="grid-column: 1 / -1;">
+        <h2>
+            <span class="tri-color">02 BASS</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <a href="#parts_container" class="top-link part-jump-link" title="Jump to currently playing part">▲ (Verse)</a>
+                <a href="#panel_mixer" class="top-link">▲ MIX</a>
+                <button id="toggleTriPanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+            </span>
+        </h2>
+        <div id="triPanelBody">
+            <div class="control-row" style="margin-bottom:0;">
+                <div class="knob"><label>DMG-01 CHANNEL</label><select id="tri_wave"><option value="gb_pu12">PULSE 12.5% (THIN / LEAD)</option><option value="gb_pu25">PULSE 25% (CLASSIC / HARP)</option><option value="gb_pu50">PULSE 50% (HOLLOW SQUARE)</option><option value="gb_pu75">PULSE 75% (NASAL / REED)</option><option value="gb_wav_tri" selected>WAVE RAM: 4-BIT TRIANGLE</option><option value="gb_wav_saw">WAVE RAM: 4-BIT SAWTOOTH</option><option value="gb_wav_bass">WAVE RAM: GB SUB BASS</option><option value="gb_wav_soft">WAVE RAM: POKEMON FLUTE</option><option value="gb_wav_pwm">WAVE RAM: 4-BIT CHORUS</option></select></div>
+                <div class="knob"><label>OCTAVE</label><select id="tri_oct"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+                <div class="knob"><label>RATE</label><select id="tri_speed"><option value="0.25">1/64</option><option value="0.5">1/32</option><option value="1" selected>1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 BAR</option><option value="32">2 BARS</option></select></div>
+                <div class="knob"><label>DECAY</label><input type="range" id="tri_dec" min="0.05" max="0.5" step="0.01" value="0.2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Melody Synthesizer Controls -->
+    <div class="panel" id="panel_mel" style="grid-column: 1 / -1;">
+        <h2>
+            <span class="mel-color">03 MELO</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <a href="#parts_container" class="top-link part-jump-link" title="Jump to currently playing part">▲ (Verse)</a>
+                <a href="#panel_mixer" class="top-link">▲ MIX</a>
+                <button id="toggleMelPanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+            </span>
+        </h2>
+        <div id="melPanelBody">
+            <div class="control-row" style="margin-bottom:0;">
+                <div class="knob"><label>DMG-01 CHANNEL</label><select id="mel_wave"><option value="gb_pu12">PULSE 12.5% (THIN / LEAD)</option><option value="gb_pu25">PULSE 25% (CLASSIC / HARP)</option><option value="gb_pu50" selected>PULSE 50% (HOLLOW SQUARE)</option><option value="gb_pu75">PULSE 75% (NASAL / REED)</option><option value="gb_wav_tri">WAVE RAM: 4-BIT TRIANGLE</option><option value="gb_wav_saw">WAVE RAM: 4-BIT SAWTOOTH</option><option value="gb_wav_bass">WAVE RAM: GB SUB BASS</option><option value="gb_wav_soft">WAVE RAM: POKEMON FLUTE</option><option value="gb_wav_pwm">WAVE RAM: 4-BIT CHORUS</option></select></div>
+                <div class="knob"><label>OCTAVE</label><select id="mel_oct"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option></select></div>
+                <div class="knob"><label>RATE</label><select id="mel_speed"><option value="0.25">1/64</option><option value="0.5">1/32</option><option value="1" selected>1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 BAR</option><option value="32">2 BARS</option></select></div>
+                <div class="knob"><label>DECAY</label><input type="range" id="mel_dec" min="0.05" max="0.5" step="0.01" value="0.1"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="panel_sq1" style="grid-column: 1 / -1;">
+        <h2>
+            <span class="sq1-color">04 MONO</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="top-play-toggle" title="Play" aria-label="Play">PLAY</button>
+                <a href="#parts_container" class="top-link part-jump-link" title="Jump to currently playing part">▲ (Verse)</a>
+                <a href="#panel_mixer" class="top-link">▲ MIX</a>
+                <button id="toggleSq1PanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+            </span>
+        </h2>
+        <div id="sq1PanelBody">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <div style="font-size:8px; color:#aaa;">04 MONO INSTRUMENT SETTINGS</div>
+                <button id="toggleSq1SettingsBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+            </div>
+            <div id="sq1SettingsContainer">
+                <div class="control-row">
+                    <div class="knob"><label>DMG-01 CHANNEL</label><select id="sq1_wave"><option value="gb_pu12" selected>PULSE 12.5% (THIN / LEAD)</option><option value="gb_pu25">PULSE 25% (CLASSIC / HARP)</option><option value="gb_pu50">PULSE 50% (HOLLOW SQUARE)</option><option value="gb_pu75">PULSE 75% (NASAL / REED)</option><option value="gb_wav_tri">WAVE RAM: 4-BIT TRIANGLE</option><option value="gb_wav_saw">WAVE RAM: 4-BIT SAWTOOTH</option><option value="gb_wav_bass">WAVE RAM: GB SUB BASS</option><option value="gb_wav_soft">WAVE RAM: POKEMON FLUTE</option><option value="gb_wav_pwm">WAVE RAM: 4-BIT CHORUS</option></select></div>
+                    <div class="knob"><label>OCTAVE</label><select id="sq1_oct"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option></select></div>
+                    <div class="knob"><label>RATE</label><select id="sq1_speed"><option value="0.25">1/64</option><option value="0.5">1/32</option><option value="1" selected>1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 BAR</option><option value="32">2 BARS</option></select></div>
+                    <div class="knob"><label>DIRECTION</label><select id="sq1_dir"><option value="forward" selected>FORWARD</option><option value="reverse">REVERSE</option><option value="pingpong">PING-PONG</option><option value="random">RANDOM</option></select></div>
+                    <div class="knob"><label>DECAY</label><input type="range" id="sq1_dec" min="0.05" max="0.5" step="0.01" value="0.1"></div>
+                </div>
+                <div class="control-row">
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>SEQUENCE STEPS (<span id="sq1_steps_label">16 - LOCKED</span>)</label>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%;">
+                            <button id="sq1_steps_minus" disabled style="padding: 4px 8px; opacity:0.5;">-</button>
+                            <input type="number" id="sq1_steps" min="1" max="64" value="16" disabled style="width:54px; text-align:center; background:#000; color:var(--nes-text); border:2px solid var(--nes-border); padding:6px 4px; font-family:inherit; font-size:9px; opacity:0.5;">
+                            <button id="sq1_steps_plus" disabled style="padding: 4px 8px; opacity:0.5;">+</button>
+                        </div>
+                    </div>
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>TIME SIGNATURE SYNC</label>
+                        <button id="sq1_lock_timesig" class="loop-btn active" style="width:100%; margin-right:0; padding:8px 10px;">LOCKED TO SONG PART</button>
+                    </div>
+                </div>
+            </div>
+            <div class="seq-block" style="margin-top:10px;">
+                <div class="seq-block-header">
+                    <div style="font-size:8px; color:#aaa;">04 MONO MELODY GRID (MONOPHONIC)</div>
+                    <div style="display:flex; gap:6px;">
+                        <button id="clearArpGridBtn" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                        <button id="toggleSq1GridBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                    </div>
+                </div>
+                <div id="sq1GridContainer" class="seq-grid" style="--steps: 8"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="panel_sq2" style="grid-column: 1 / -1;">
+        <h2>
+            <span class="sq2-color">05 POLY</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="top-play-toggle" title="Play" aria-label="Play">PLAY</button>
+                <a href="#parts_container" class="top-link part-jump-link" title="Jump to currently playing part">▲ (Verse)</a>
+                <a href="#panel_mixer" class="top-link">▲ MIX</a>
+                <button id="toggleSq2PanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+            </span>
+        </h2>
+        <div id="sq2PanelBody">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <div style="font-size:8px; color:#aaa;">05 POLY INSTRUMENT SETTINGS</div>
+                <button id="toggleSq2SettingsBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+            </div>
+            <div id="sq2SettingsContainer">
+                <div class="control-row">
+                    <div class="knob"><label>DMG-01 CHANNEL</label><select id="sq2_wave"><option value="gb_pu12">PULSE 12.5% (THIN / LEAD)</option><option value="gb_pu25" selected>PULSE 25% (CLASSIC / HARP)</option><option value="gb_pu50">PULSE 50% (HOLLOW SQUARE)</option><option value="gb_pu75">PULSE 75% (NASAL / REED)</option><option value="gb_wav_tri">WAVE RAM: 4-BIT TRIANGLE</option><option value="gb_wav_saw">WAVE RAM: 4-BIT SAWTOOTH</option><option value="gb_wav_bass">WAVE RAM: GB SUB BASS</option><option value="gb_wav_soft">WAVE RAM: POKEMON FLUTE</option><option value="gb_wav_pwm">WAVE RAM: 4-BIT CHORUS</option></select></div>
+                    <div class="knob"><label>OCTAVE</label><select id="sq2_oct"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+                    <div class="knob"><label>RATE</label><select id="sq2_speed"><option value="0.25">1/64</option><option value="0.5">1/32</option><option value="1" selected>1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 BAR</option><option value="32">2 BARS</option></select></div>
+                    <div class="knob"><label>DIRECTION</label><select id="sq2_dir"><option value="forward" selected>FORWARD</option><option value="reverse">REVERSE</option><option value="pingpong">PING-PONG</option><option value="random">RANDOM</option></select></div>
+                    <div class="knob"><label>DECAY</label><input type="range" id="sq2_dec" min="0.05" max="0.5" step="0.01" value="0.15"></div>
+                </div>
+                <div class="control-row">
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>SEQUENCE STEPS (<span id="sq2_steps_label">16 - LOCKED</span>)</label>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%;">
+                            <button id="sq2_steps_minus" disabled style="padding: 4px 8px; opacity:0.5;">-</button>
+                            <input type="number" id="sq2_steps" min="1" max="64" value="16" disabled style="width:54px; text-align:center; background:#000; color:var(--nes-text); border:2px solid var(--nes-border); padding:6px 4px; font-family:inherit; font-size:9px; opacity:0.5;">
+                            <button id="sq2_steps_plus" disabled style="padding: 4px 8px; opacity:0.5;">+</button>
+                        </div>
+                    </div>
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>TIME SIGNATURE SYNC</label>
+                        <button id="sq2_lock_timesig" class="loop-btn active" style="width:100%; margin-right:0; padding:8px 10px;">LOCKED TO SONG PART</button>
+                    </div>
+                </div>
+            </div>
+            <div class="seq-block" style="margin-top:10px;">
+                <div class="seq-block-header">
+                    <div style="font-size:8px; color:#aaa;">05 POLY MELODY GRID (UP TO 3 NOTES PER STEP)</div>
+                    <div style="display:flex; gap:6px;">
+                        <button id="clearPolyGridBtn" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                        <button id="toggleSq2GridBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                    </div>
+                </div>
+                <div id="sq2GridContainer" class="seq-grid" style="--steps: 8"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="panel_sq3" style="grid-column: 1 / -1;">
+        <h2>
+            <span class="sq3-color">06 NOISE</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="top-play-toggle" title="Play" aria-label="Play">PLAY</button>
+                <a href="#parts_container" class="top-link part-jump-link" title="Jump to currently playing part">▲ (Verse)</a>
+                <a href="#panel_mixer" class="top-link">▲ MIX</a>
+                <button id="toggleSq3PanelBtn" style="font-size:8px; padding:2px 6px;">-</button>
+            </span>
+        </h2>
+        <div id="sq3PanelBody">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <div style="font-size:8px; color:#aaa;">06 NOISE INSTRUMENT SETTINGS</div>
+                <button id="toggleSq3SettingsBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+            </div>
+            <div id="sq3SettingsContainer">
+                <div class="control-row">
+                    <div class="knob"><label>NOISE TYPE</label><select id="sq3_noise_type"><option value="white" selected>WHITE</option><option value="pink">PINK</option><option value="metallic">7-BIT LFSR (GB METAL)</option><option value="crushed">15-BIT LFSR (GB CLOCK)</option></select></div>
+                    <div class="knob"><label>FILTER</label><select id="sq3_filter_type"><option value="bandpass" selected>BANDPASS</option><option value="lowpass">LOWPASS</option><option value="highpass">HIGHPASS</option><option value="notch">NOTCH</option></select></div>
+                    <div class="knob"><label>RESONANCE</label><input type="range" id="sq3_res" min="0.5" max="20" step="0.5" value="4.0"></div>
+                    <div class="knob"><label>GRIT / CRUSH</label><input type="range" id="sq3_crush" min="1" max="16" step="1" value="1"></div>
+                    <div class="knob"><label>PITCH SWEEP</label><select id="sq3_sweep"><option value="0" selected>FLAT</option><option value="1">FALL (ZAP)</option><option value="-1">RISE (WHOOSH)</option></select></div>
+                </div>
+                <div class="control-row">
+                    <div class="knob"><label>OCTAVE</label><select id="sq3_oct"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+                    <div class="knob"><label>RATE</label><select id="sq3_speed"><option value="0.25">1/64</option><option value="0.5">1/32</option><option value="1" selected>1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 BAR</option><option value="32">2 BARS</option></select></div>
+                    <div class="knob"><label>DIRECTION</label><select id="sq3_dir"><option value="forward" selected>FORWARD</option><option value="reverse">REVERSE</option><option value="pingpong">PING-PONG</option><option value="random">RANDOM</option></select></div>
+                    <div class="knob"><label>DECAY</label><input type="range" id="sq3_dec" min="0.02" max="0.8" step="0.01" value="0.12"></div>
+                </div>
+                <div class="control-row">
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>SEQUENCE STEPS (<span id="sq3_steps_label">16 - LOCKED</span>)</label>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%;">
+                            <button id="sq3_steps_minus" disabled style="padding: 4px 8px; opacity:0.5;">-</button>
+                            <input type="number" id="sq3_steps" min="1" max="64" value="16" disabled style="width:54px; text-align:center; background:#000; color:var(--nes-text); border:2px solid var(--nes-border); padding:6px 4px; font-family:inherit; font-size:9px; opacity:0.5;">
+                            <button id="sq3_steps_plus" disabled style="padding: 4px 8px; opacity:0.5;">+</button>
+                        </div>
+                    </div>
+                    <div class="knob" style="flex: 1.5; min-width: 170px;">
+                        <label>TIME SIGNATURE SYNC</label>
+                        <button id="sq3_lock_timesig" class="loop-btn active" style="width:100%; margin-right:0; padding:8px 10px;">LOCKED TO SONG PART</button>
+                    </div>
+                </div>
+            </div>
+            <div class="seq-block" style="margin-top:10px;">
+                <div class="seq-block-header">
+                    <div style="font-size:8px; color:#aaa;">06 NOISE MELODY GRID (MONOPHONIC)</div>
+                    <div style="display:flex; gap:6px;">
+                        <button id="clearNoiseGridBtn" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                        <button id="toggleSq3GridBtn" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                    </div>
+                </div>
+                <div id="sq3GridContainer" class="seq-grid" style="--steps: 8"></div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <!-- FX Section (Advanced 4-Tweak + Mix Layout) -->
+    <div class="panel" style="grid-column: 1 / -1;" id="panel_fx">
+        <h2>
+            <span style="color:var(--nes-cyan);">FX</span>
+            <button id="toggleFxPanelBtn" style="font-size:8px; padding:2px 6px;">+</button>
+        </h2>
+        <div class="fx-module-grid" id="fxPanelContainer" style="display:none;">
+            
+            <!-- Delay Module (Tempo Synced) -->
+            <div class="fx-card">
+                <div class="fx-card-header">
+                    <span>DELAY</span>
+                    <button class="fx-min-btn" data-fx="delay" style="font-size:7px; padding:1px 4px;">+</button>
+                </div>
+                <div id="fx_body_delay" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="fx-tweaks-grid">
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">SYNC TIME</label>
+                            <select id="fx_delay_time" style="width:100%; font-size:7px; padding:4px;">
+                                <option value="1">1/1 (1 Bar)</option>
+                                <option value="0.5">1/2</option>
+                                <option value="0.25">1/4</option>
+                                <option value="0.125" selected>1/8</option>
+                                <option value="0.0625">1/16</option>
+                            </select>
+                        </div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">FEEDBACK</label><input type="range" id="fx_delay_feedback" min="0" max="0.8" step="0.01" value="0.02"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">DAMPING</label><input type="range" id="fx_delay_damping" min="200" max="10000" step="500" value="4000"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">SPREAD</label><input type="range" id="fx_delay_spread" min="0" max="1" step="0.05" value="0.5"></div>
+                    </div>
+                    <div class="fx-mix-row">
+                        <label>DELAY MIX</label>
+                        <input type="range" id="fx_delay_mix" min="0" max="1" step="0.01" value="0.08">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reverb Module -->
+            <div class="fx-card">
+                <div class="fx-card-header">
+                    <span>REVERB</span>
+                    <button class="fx-min-btn" data-fx="reverb" style="font-size:7px; padding:1px 4px;">+</button>
+                </div>
+                <div id="fx_body_reverb" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="fx-tweaks-grid">
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">ROOM SIZE</label><input type="range" id="fx_reverb_room" min="0.1" max="1.0" step="0.05" value="0.6"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">DECAY</label><input type="range" id="fx_reverb_decay" min="0.5" max="5.0" step="0.2" value="2.0"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">DAMPING</label><input type="range" id="fx_reverb_damping" min="500" max="12000" step="500" value="5000"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">PRE-DELAY</label><input type="range" id="fx_reverb_predelay" min="0" max="0.1" step="0.01" value="0.02"></div>
+                    </div>
+                    <div class="fx-mix-row">
+                        <label>REVERB MIX</label>
+                        <input type="range" id="fx_reverb_mix" min="0" max="1" step="0.01" value="0.08">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chorus Module (Tempo Synced LFO Rate) -->
+            <div class="fx-card">
+                <div class="fx-card-header">
+                    <span>CHORUS</span>
+                    <button class="fx-min-btn" data-fx="chorus" style="font-size:7px; padding:1px 4px;">+</button>
+                </div>
+                <div id="fx_body_chorus" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="fx-tweaks-grid">
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">SYNC RATE</label>
+                            <select id="fx_chorus_rate" style="width:100%; font-size:7px; padding:4px;">
+                                <option value="1">1/1 (1 Bar)</option>
+                                <option value="0.5">1/2</option>
+                                <option value="0.25" selected>1/4</option>
+                                <option value="0.125">1/8</option>
+                                <option value="0.0625">1/16</option>
+                            </select>
+                        </div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">DEPTH</label><input type="range" id="fx_chorus_depth" min="0.001" max="0.025" step="0.001" value="0.008"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">FEEDBACK</label><input type="range" id="fx_chorus_feedback" min="0" max="0.7" step="0.05" value="0.2"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">VOICES</label><input type="range" id="fx_chorus_voices" min="1" max="4" step="1" value="2"></div>
+                    </div>
+                    <div class="fx-mix-row">
+                        <label>CHORUS MIX</label>
+                        <input type="range" id="fx_chorus_mix" min="0" max="1" step="0.01" value="0.08">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distortion Module -->
+            <div class="fx-card">
+                <div class="fx-card-header">
+                    <span>DISTORTION</span>
+                    <button class="fx-min-btn" data-fx="distortion" style="font-size:7px; padding:1px 4px;">+</button>
+                </div>
+                <div id="fx_body_distortion" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="fx-tweaks-grid">
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">DRIVE</label><input type="range" id="fx_dist_drive" min="1" max="30" step="1" value="8"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">TONE (LPF)</label><input type="range" id="fx_dist_tone" min="500" max="10000" step="200" value="4000"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">SYMMETRY</label><input type="range" id="fx_dist_symmetry" min="0" max="1" step="0.05" value="0.5"></div>
+                        <div class="knob" style="padding:5px;"><label style="font-size:7px;">HPF CUT</label><input type="range" id="fx_dist_hpf" min="20" max="1000" step="20" value="100"></div>
+                    </div>
+                    <div class="fx-mix-row">
+                        <label>DISTORTION MIX</label>
+                        <input type="range" id="fx_dist_mix" min="0" max="1" step="0.01" value="0.08">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="panel" style="grid-column: 1 / -1;">
+        <h2>MASTER OUT SCOPE</h2>
+        <canvas id="scope"></canvas>
+    </div>
+</div>
+
+<!-- PERFORMANCE & MPC MODE VIEW -->
+<div class="layout perf-container" id="perfContainer">
+    <div class="panel" style="grid-column: 1 / -1;">
+        <h2>LIVE PERFORMANCE & MPC DECK</h2>
+        <div class="perf-controls">
+            <div class="knob"><label>ACTIVE INSTRUMENT / PART</label>
+                <select id="perf_target">
+                    <option value="drums" selected>TRACK 1 - MPC DRUM (NOISE KIT)</option>
+                    <option value="tri">TRACK 2 BASS SYNTH</option>
+                    <option value="mel">TRACK 3 MELODY SYNTH</option>
+                    <option value="sq1">TRACK 4 MONO SYNTH</option>
+                    <option value="sq2">TRACK 5 POLY SYNTH</option>
+                    <option value="sq3">TRACK 6 NOISE SYNTH</option>
+                </select>
+            </div>
+            <div class="knob"><label>RECORDING STATE</label>
+                <div style="display:flex; gap:10px; width:100%;">
+                    <button id="recStartBtn" style="flex:1; color:var(--nes-red); border-color:var(--nes-red);">● START REC</button>
+                    <button id="recStopBtn" style="flex:1; color:var(--nes-orange); border-color:var(--nes-orange);">■ STOP REC</button>
+                </div>
+            </div>
+            <div class="knob"><label>LOOP PLAYBACK</label>
+                <button id="perfLoopBtn" class="loop-btn" style="width:100%; padding:10px;">↻ LOOP OFF</button>
+            </div>
+        </div>
+
+        <!-- MPC Drum Pads -->
+        <div id="mpcSection">
+            <div style="font-size:9px; color:#aaa; margin-bottom:10px;">MPC DRUM PADS (CLICK OR USE KEYS Q, W, E, R, A, S, D, F)</div>
+            <div class="mpc-grid">
+                <div class="mpc-pad" data-drum="kick" data-pad="0"><b>KICK (DEEP)</b><span style="font-size:7px; color:#666; margin-top:4px;">[Q]</span></div>
+                <div class="mpc-pad" data-drum="snare" data-pad="1"><b>SNARE</b><span style="font-size:7px; color:#666; margin-top:4px;">[W]</span></div>
+                <div class="mpc-pad" data-drum="hat" data-pad="2"><b>CLOSED HAT</b><span style="font-size:7px; color:#666; margin-top:4px;">[E]</span></div>
+                <div class="mpc-pad" data-drum="openhat" data-pad="3"><b>OPEN HAT</b><span style="font-size:7px; color:#666; margin-top:4px;">[R]</span></div>
+                <div class="mpc-pad" data-drum="clap" data-pad="4"><b>CLAP</b><span style="font-size:7px; color:#666; margin-top:4px;">[A]</span></div>
+                <div class="mpc-pad" data-drum="rim" data-pad="5"><b>RIMSHOT</b><span style="font-size:7px; color:#666; margin-top:4px;">[S]</span></div>
+                <div class="mpc-pad" data-drum="tom" data-pad="6"><b>LOW TOM</b><span style="font-size:7px; color:#666; margin-top:4px;">[D]</span></div>
+                <div class="mpc-pad" data-drum="zap" data-pad="7"><b>8-BIT ZAP</b><span style="font-size:7px; color:#666; margin-top:4px;">[F]</span></div>
+            </div>
+        </div>
+
+        <!-- 2-Octave Keyboard -->
+        <div id="keyboardSection" style="display:none;">
+            <div style="font-size:9px; color:#aaa; margin-bottom:10px;">2-OCTAVE SYNTH KEYBOARD (SCALE LOCKED)</div>
+            <div class="keyboard-wrapper" id="pianoKeyboard">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Mode Switching ---
+    const toggleModeBannerBtn = document.getElementById('toggleModeBannerBtn');
+    const modeBanner = document.getElementById('modeBanner');
+    toggleModeBannerBtn.onclick = () => {
+        const isVisible = modeBanner.classList.toggle('visible');
+        toggleModeBannerBtn.classList.toggle('active', isVisible);
+        toggleModeBannerBtn.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
+    };
+
+    const btnStudioMode = document.getElementById('btnStudioMode');
+    const btnPerfMode = document.getElementById('btnPerfMode');
+    const studioContainer = document.getElementById('studioContainer');
+    const perfContainer = document.getElementById('perfContainer');
+
+    btnStudioMode.onclick = () => {
+        btnStudioMode.classList.add('active');
+        btnPerfMode.classList.remove('active');
+        studioContainer.classList.remove('hidden');
+        perfContainer.classList.remove('active');
+    };
+
+    btnPerfMode.onclick = () => {
+        btnPerfMode.classList.add('active');
+        btnStudioMode.classList.remove('active');
+        studioContainer.classList.add('hidden');
+        perfContainer.classList.add('active');
+    };
+
+    // --- State Management ---
+    let songParts = {};
+    let partOrder = [];
+    let loopPartId = null;
+    
+    const drumTracks = [
+        { id: 'kick', label: 'KCK' },
+        { id: 'snare', label: 'SNR' },
+        { id: 'hat', label: 'HAT' },
+        { id: 'openhat', label: 'OHAT' },
+        { id: 'clap', label: 'CLP' },
+        { id: 'rim', label: 'RIM' },
+        { id: 'tom', label: 'TOM' },
+        { id: 'zap', label: 'ZAP' }
+    ];
+
+    // Playback State
+    let isPlaying = false, globalStepCounter = 0, nextNoteTime = 0, timerID;
+    let playheadPartIdx = 0; 
+    let playheadStep = 0;
+    let partElapsedSteps = 0;
+    let lastPartSlotKey = null; 
+
+    // Audio Context & FX Nodes
+    let audioCtx, masterGain, analyser;
+    let buses = {};
+    let fxNodes = {};
+    let drumVols = { kick: 1.1, snare: 0.76, hat: 0.8, openhat: 0.8, clap: 1.0, rim: 0.9, tom: 1.1, zap: 0.8 };
+    let isMuted = { sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false };
+    let isSoloed = { sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false };
+
+    // Track 4 (MONO) Independent / Time-Sig Locked Monophonic Sequencer State
+    let arpSeqData = Array(64).fill(null);
+    let sq1Steps = 16;
+    let sq1LockTimeSig = true;
+
+    // Track 5 (POLY) Independent / Time-Sig Locked Polyphonic (up to 3 notes/step) Sequencer State
+    let polySeqData = Array.from({ length: 64 }, () => []);
+    let sq2Steps = 16;
+    let sq2LockTimeSig = true;
+
+    // Track 6 (NOISE) Independent / Time-Sig Locked Monophonic Noise Sequencer State
+    let noiseSeqData = Array(64).fill(null);
+    let sq3Steps = 16;
+    let sq3LockTimeSig = true;
+
+    // --- Performance Loop State ---
+    let isRecording = false;
+    let recStartTime = 0;
+    let perfLoops = {}; 
+    let perfLoopActive = false;
+    let perfLoopDuration = 4.0; 
+    let perfPlaybackTimer = null;
+
+    // --- UI Listeners & Updates ---
+    function getActivePart() {
+        const activeId = loopPartId || partOrder[playheadPartIdx];
+        if (activeId && songParts[activeId]) return songParts[activeId];
+        const allParts = Object.values(songParts);
+        return allParts.length > 0 ? allParts[0] : { bpm: 89, keyRoot: 4, keyMode: 'minor' };
+    }
+
+    function updatePartJumpLinks() {
+        const activeId = loopPartId || partOrder[playheadPartIdx];
+        const targetPart = (activeId && songParts[activeId]) ? songParts[activeId] : Object.values(songParts)[0];
+        const href = targetPart ? `#part_panel_${targetPart.id}` : '#parts_container';
+        const shortName = targetPart ? (targetPart.name.length > 14 ? targetPart.name.slice(0, 13) + '…' : targetPart.name) : '';
+        const label = targetPart ? `▲ (${shortName})` : '▲';
+        const title = targetPart ? `Jump to currently playing part: ${targetPart.name}` : 'Jump to song parts';
+
+        document.querySelectorAll('.part-jump-link').forEach(link => {
+            if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+            if (link.textContent !== label) link.textContent = label;
+            if (link.title !== title) link.title = title;
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.top-play-toggle')) {
+            togglePlayback();
+            return;
+        }
+        const partLink = e.target.closest('.part-jump-link');
+        if (partLink) {
+            updatePartJumpLinks();
+            const href = partLink.getAttribute('href');
+            if (href && href.startsWith('#part_panel_')) {
+                const targetPanel = document.querySelector(href);
+                if (targetPanel) {
+                    const body = targetPanel.querySelector('.part-body');
+                    const minBtn = targetPanel.querySelector('.minmax-btn');
+                    if (body && body.style.display === 'none') {
+                        body.style.display = 'block';
+                        if (minBtn) minBtn.innerText = '-';
+                    }
+                }
+            }
+        }
+        const mixerLink = e.target.closest('a[href="#panel_mixer"]');
+        if (mixerLink && mixerPanelContainer && mixerPanelContainer.style.display === 'none') {
+            mixerPanelContainer.style.display = 'block';
+            if (toggleMixerPanelBtn) toggleMixerPanelBtn.innerText = '-';
+        }
+        const synthsLink = e.target.closest('a[href="#panel_synth_controls"]');
+        if (synthsLink && synthControlsContainer && synthControlsContainer.style.display === 'none') {
+            synthControlsContainer.style.display = 'grid';
+            if (toggleSynthControlsBtn) toggleSynthControlsBtn.innerText = '-';
+        }
+    });
+
+    // Toggle Console Mixer Panel Minimization
+    const toggleMixerPanelBtn = document.getElementById('toggleMixerPanelBtn');
+    const mixerPanelContainer = document.getElementById('mixerPanelContainer');
+    toggleMixerPanelBtn.onclick = () => {
+        const isHidden = mixerPanelContainer.style.display === 'none';
+        mixerPanelContainer.style.display = isHidden ? 'block' : 'none';
+        toggleMixerPanelBtn.innerText = isHidden ? '-' : '+';
+    };
+
+    // Toggle Track 1-5 Synth Controls Container
+    const toggleSynthControlsBtn = document.getElementById('toggleSynthControlsBtn');
+    const synthControlsContainer = document.getElementById('synthControlsContainer');
+    toggleSynthControlsBtn.onclick = () => {
+        const isHidden = synthControlsContainer.style.display === 'none';
+        synthControlsContainer.style.display = isHidden ? 'grid' : 'none';
+        toggleSynthControlsBtn.innerText = isHidden ? '-' : '+';
+    };
+    document.querySelectorAll('.mixer-strip a[href^="#panel_"]').forEach(link => {
+        link.addEventListener('click', () => {
+            if (synthControlsContainer.style.display === 'none') {
+                synthControlsContainer.style.display = 'grid';
+                toggleSynthControlsBtn.innerText = '-';
+            }
+            const targetHref = link.getAttribute('href');
+            const panelMap = {
+                '#panel_mel': { bodyId: 'melPanelBody', btnId: 'toggleMelPanelBtn' },
+                '#panel_tri': { bodyId: 'triPanelBody', btnId: 'toggleTriPanelBtn' },
+                '#panel_sq1': { bodyId: 'sq1PanelBody', btnId: 'toggleSq1PanelBtn' },
+                '#panel_sq2': { bodyId: 'sq2PanelBody', btnId: 'toggleSq2PanelBtn' },
+                '#panel_sq3': { bodyId: 'sq3PanelBody', btnId: 'toggleSq3PanelBtn' }
+            };
+            if (panelMap[targetHref]) {
+                const bodyEl = document.getElementById(panelMap[targetHref].bodyId);
+                const btnEl = document.getElementById(panelMap[targetHref].btnId);
+                if (bodyEl && bodyEl.style.display === 'none') {
+                    bodyEl.style.display = 'block';
+                    if (btnEl) btnEl.innerText = '-';
+                }
+            }
+        });
+    });
+
+    // Toggle Tracks 2, 3, 4, 5, and 6 Panels & Instrument Settings
+    [
+        { btnId: 'toggleMelPanelBtn', targetId: 'melPanelBody', openText: '-', closedText: '+' },
+        { btnId: 'toggleTriPanelBtn', targetId: 'triPanelBody', openText: '-', closedText: '+' },
+        { btnId: 'toggleSq1PanelBtn', targetId: 'sq1PanelBody', openText: '-', closedText: '+' },
+        { btnId: 'toggleSq2PanelBtn', targetId: 'sq2PanelBody', openText: '-', closedText: '+' },
+        { btnId: 'toggleSq3PanelBtn', targetId: 'sq3PanelBody', openText: '-', closedText: '+' },
+        { btnId: 'toggleSq1SettingsBtn', targetId: 'sq1SettingsContainer', openText: '- MINIMIZE', closedText: '+ EXPAND' },
+        { btnId: 'toggleSq2SettingsBtn', targetId: 'sq2SettingsContainer', openText: '- MINIMIZE', closedText: '+ EXPAND' },
+        { btnId: 'toggleSq3SettingsBtn', targetId: 'sq3SettingsContainer', openText: '- MINIMIZE', closedText: '+ EXPAND' }
+    ].forEach(({ btnId, targetId, openText, closedText }) => {
+        const btn = document.getElementById(btnId);
+        const target = document.getElementById(targetId);
+        if (btn && target) {
+            btn.onclick = () => {
+                const isHidden = target.style.display === 'none';
+                target.style.display = isHidden ? 'block' : 'none';
+                btn.innerText = isHidden ? openText : closedText;
+            };
+        }
+    });
+
+    // Toggle FX Panel Minimization
+    const toggleFxPanelBtn = document.getElementById('toggleFxPanelBtn');
+    const fxPanelContainer = document.getElementById('fxPanelContainer');
+    toggleFxPanelBtn.onclick = () => {
+        const isHidden = fxPanelContainer.style.display === 'none';
+        fxPanelContainer.style.display = isHidden ? 'grid' : 'none';
+        toggleFxPanelBtn.innerText = isHidden ? '-' : '+';
+    };
+
+    // Toggle FX Modules Minimization
+    document.querySelectorAll('.fx-min-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const fxName = e.target.dataset.fx;
+            const body = document.getElementById('fx_body_' + fxName);
+            const isHidden = body.style.display === 'none';
+            body.style.display = isHidden ? 'flex' : 'none';
+            e.target.innerText = isHidden ? '-' : '+';
+        };
+    });
+
+    // Toggle Drum Volume Sliders
+    const toggleDrumSlidersBtn = document.getElementById('toggleDrumSlidersBtn');
+    const drumSlidersContainer = document.getElementById('drumSlidersContainer');
+    toggleDrumSlidersBtn.onclick = () => {
+        const isHidden = drumSlidersContainer.style.display === 'none';
+        drumSlidersContainer.style.display = isHidden ? 'flex' : 'none';
+        toggleDrumSlidersBtn.innerText = isHidden ? '- HIDE DRUM VOLUMES' : '+ EXPAND DRUM VOLUMES';
+    };
+
+    document.querySelectorAll('.drum-fader').forEach(fader => {
+        fader.oninput = (e) => {
+            const drum = e.target.dataset.drum;
+            drumVols[drum] = parseFloat(e.target.value);
+        };
+    });
+
+    function createPart(baseName, timeSig = 16, existingTracksMuted = null, existingFx = null, existingDrums = null, existingMel = null, existingBass = null, existingChords = null, existingBpm = 89, existingKeyRoot = 4, existingKeyMode = 'minor') {
+        let finalName = baseName;
+        let existingNames = Object.values(songParts).map(p => p.name);
+        
+        while(existingNames.includes(finalName)) {
+            finalName += "+";
+        }
+
+        const id = 'part_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        
+        let tracksActive = existingTracksMuted ? JSON.parse(JSON.stringify(existingTracksMuted)) : { sq1: true, sq2: true, sq3: true, tri: true, mel: true, noi: true };
+        
+        // FX sends per track: delay (dly), reverb (rev), chorus (chs), distortion (dst)
+        let fxActive = existingFx ? JSON.parse(JSON.stringify(existingFx)) : {
+            sq1: { dly: false, rev: false, chs: false, dst: false },
+            sq2: { dly: false, rev: false, chs: false, dst: false },
+            sq3: { dly: false, rev: false, chs: false, dst: false },
+            tri: { dly: false, rev: false, chs: false, dst: false },
+            mel: { dly: false, rev: false, chs: false, dst: false },
+            noi: { dly: false, rev: false, chs: false, dst: false }
+        };
+        
+        songParts[id] = {
+            id,
+            name: finalName,
+            timeSig,
+            bpm: existingBpm,
+            keyRoot: existingKeyRoot,
+            keyMode: existingKeyMode,
+            chords: existingChords ? [...existingChords] : [],
+            drums: [],
+            tracksActive,
+            fxActive
+        };
+        
+        for(let r=0; r<drumTracks.length; r++) { 
+            let row = [];
+            for(let c=0; c<64; c++) {
+                row.push(existingDrums ? existingDrums[r][c] : false);
+            }
+            songParts[id].drums.push(row); 
+        }
+        
+        songParts[id].melData = existingMel ? [...existingMel] : Array(64).fill(null);
+        songParts[id].bassData = existingBass ? [...existingBass] : Array(64).fill(null);
+        
+        renderPartPool();
+        renderParts();
+        return id;
+    }
+
+    document.getElementById('create_part_btn').onclick = () => {
+        let nameInput = document.getElementById('new_part_name').value.trim();
+        const baseName = nameInput || "Verse";
+        const newId = createPart(baseName);
+        partOrder.push(newId);
+        document.getElementById('new_part_name').value = "Verse";
+        renderSongProgression();
+    };
+
+    document.getElementById('clearSongBtn').onclick = () => {
+        if (!confirm("Clear the song structure?")) return;
+        partOrder = [];
+        playheadPartIdx = 0; playheadStep = 0;
+        renderSongProgression();
+    };
+
+    function renderPartPool() {
+        const pool = document.getElementById('part_pool');
+        pool.innerHTML = '';
+        Object.values(songParts).forEach(part => {
+            const b = document.createElement('div');
+            b.className = 'prog-block';
+            b.innerText = part.name;
+            b.onclick = (e) => { 
+                if(e.target.classList.contains('remove-btn')) return;
+                partOrder.push(part.id); 
+                renderSongProgression(); 
+            };
+            
+            const rm = document.createElement('div');
+            rm.className = 'remove-btn';
+            rm.innerText = 'X';
+            rm.title = 'Delete part entirely';
+            rm.onclick = (e) => {
+                e.stopPropagation();
+                if(confirm("Delete '" + part.name + "' completely from the session?")) {
+                    delete songParts[part.id];
+                    partOrder = partOrder.filter(p => p !== part.id);
+                    if(loopPartId === part.id) loopPartId = null;
+                    if(playheadPartIdx >= partOrder.length) {
+                        playheadPartIdx = 0;
+                        playheadStep = 0;
+                        globalStepCounter = 0;
+                    }
+                    renderPartPool();
+                    renderSongProgression();
+                    renderParts();
+                }
+            };
+            b.appendChild(rm);
+
+            pool.appendChild(b);
+        });
+    }
+
+    let draggedIdx = null;
+
+    function renderSongProgression() {
+        const tl = document.getElementById('song_timeline');
+        tl.innerHTML = '';
+        if (partOrder.length === 0) {
+            tl.innerHTML = `<div id="emptyStateMsg">ADD A SONG PART TO BEGIN PLAYING</div>`;
+            return;
+        }
+        partOrder.forEach((id, idx) => {
+            const b = document.createElement('div');
+            b.className = 'prog-block song-timeline-block';
+            b.draggable = true;
+            b.innerText = songParts[id] ? songParts[id].name : "???";
+            
+            b.ondragstart = (e) => {
+                draggedIdx = idx;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => b.style.opacity = '0.5', 0);
+            };
+            b.ondragend = () => {
+                draggedIdx = null;
+                b.style.opacity = '1';
+                document.querySelectorAll('.song-timeline-block').forEach(el => el.style.borderColor = '');
+            };
+            b.ondragover = (e) => {
+                e.preventDefault();
+                if (draggedIdx !== null && draggedIdx !== idx) {
+                    b.style.borderColor = 'var(--nes-red)';
+                }
+            };
+            b.ondragleave = () => {
+                b.style.borderColor = '';
+            };
+            b.ondrop = (e) => {
+                e.preventDefault();
+                b.style.borderColor = '';
+                if (draggedIdx !== null && draggedIdx !== idx) {
+                    const draggedId = partOrder.splice(draggedIdx, 1)[0];
+                    partOrder.splice(idx, 0, draggedId);
+                    
+                    if (playheadPartIdx === draggedIdx) {
+                        playheadPartIdx = idx;
+                    } else if (draggedIdx < playheadPartIdx && idx >= playheadPartIdx) {
+                        playheadPartIdx--;
+                    } else if (draggedIdx > playheadPartIdx && idx <= playheadPartIdx) {
+                        playheadPartIdx++;
+                    }
+                    renderSongProgression();
+                }
+            };
+
+            const rm = document.createElement('div');
+            rm.className = 'remove-btn';
+            rm.innerText = 'X';
+            rm.title = 'Remove from timeline';
+            rm.onclick = (e) => {
+                e.stopPropagation();
+                partOrder.splice(idx, 1);
+                
+                if (idx < playheadPartIdx) {
+                    playheadPartIdx--;
+                } else if (idx === playheadPartIdx) {
+                    playheadPartIdx = Math.min(playheadPartIdx, partOrder.length - 1);
+                    playheadStep = 0;
+                    globalStepCounter = 0;
+                }
+                
+                renderSongProgression();
+            };
+            b.appendChild(rm);
+
+            tl.appendChild(b);
+        });
+        updatePartJumpLinks();
+    }
+
+    const keyNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const scaleModeOptions = [
+        { val: 'major', label: 'Major (Ionian)' },
+        { val: 'minor', label: 'Minor (Aeolian)' },
+        { val: 'dorian', label: 'Dorian' },
+        { val: 'phrygian', label: 'Phrygian' },
+        { val: 'lydian', label: 'Lydian' },
+        { val: 'mixolydian', label: 'Mixolydian' },
+        { val: 'locrian', label: 'Locrian' },
+        { val: 'harm_min', label: 'Harmonic Minor' },
+        { val: 'mel_min', label: 'Melodic Minor' },
+        { val: 'pent_maj', label: 'Pentatonic Major' },
+        { val: 'pent_min', label: 'Pentatonic Minor' },
+        { val: 'blues', label: 'Blues' },
+        { val: 'whole_tone', label: 'Whole Tone' },
+        { val: 'chromatic', label: 'Chromatic' },
+        { val: 'hirajoshi', label: 'Hirajoshi' },
+        { val: 'arabian', label: 'Arabian' }
+    ];
+
+    function getChordSelectHTML(keyMode = 'minor') {
+        let html = '<option value="">+ Add Chord...</option>';
+        const labels = scaleLabelsMap[keyMode] || scaleLabelsMap.minor;
+        labels.forEach((lbl, i) => { html += `<option value="${i}">${lbl}</option>`; });
+        return html;
+    }
+
+    function renderParts() {
+        const container = document.getElementById('parts_container');
+        const scrollPositions = {};
+        container.querySelectorAll('.seq-grid').forEach(el => scrollPositions[el.id] = el.scrollLeft);
+
+        container.innerHTML = '';
+        Object.values(songParts).forEach(part => {
+            const isLoop = (loopPartId === part.id) ? 'active' : '';
+            const loopText = (loopPartId === part.id) ? 'LOOPING' : '↻ LOOP';
+            const panel = document.createElement('div');
+            panel.className = 'panel part-panel';
+            panel.id = `part_panel_${part.id}`;
+            panel.dataset.id = part.id;
+
+            let keyOptionsHtml = '';
+            keyNames.forEach((kName, idx) => {
+                keyOptionsHtml += `<option value="${idx}" ${part.keyRoot === idx ? 'selected' : ''}>${kName}</option>`;
+            });
+
+            let scaleOptionsHtml = '';
+            scaleModeOptions.forEach(s => {
+                scaleOptionsHtml += `<option value="${s.val}" ${part.keyMode === s.val ? 'selected' : ''}>${s.label}</option>`;
+            });
+            
+            const trackDefs = [
+                { id: 'noi', label: '01 DRUM' },
+                { id: 'tri', label: '02 BASS' },
+                { id: 'mel', label: '03 MELO' },
+                { id: 'sq1', label: '04 MONO' },
+                { id: 'sq2', label: '05 POLY' },
+                { id: 'sq3', label: '06 NOISE' }
+            ];
+
+            let tracksHtml = '<div class="part-tracks-container">';
+            trackDefs.forEach(tr => {
+                const isActive = part.tracksActive[tr.id];
+                const cls = isActive ? 'checked' : 'muted';
+                const symbol = isActive ? '✓ ' + tr.label : '✕ ' + tr.label;
+                
+                const fx = part.fxActive[tr.id];
+                const dlyCls = fx.dly ? 'active' : '';
+                const revCls = fx.rev ? 'active' : '';
+                const chsCls = fx.chs ? 'active' : '';
+                const dstCls = fx.dst ? 'active' : '';
+
+                tracksHtml += `
+                    <div class="track-group">
+                        <div class="track-toggle-item ${cls}" data-track="${tr.id}" data-id="${part.id}" title="Toggle ${tr.label} in this part">${symbol}</div>
+                        <button class="fx-icon-btn ${dlyCls}" data-track="${tr.id}" data-fx="dly" data-id="${part.id}" title="Delay Send">DLY</button>
+                        <button class="fx-icon-btn ${revCls}" data-track="${tr.id}" data-fx="rev" data-id="${part.id}" title="Reverb Send">REV</button>
+                        <button class="fx-icon-btn ${chsCls}" data-track="${tr.id}" data-fx="chs" data-id="${part.id}" title="Chorus Send">CHS</button>
+                        <button class="fx-icon-btn ${dstCls}" data-track="${tr.id}" data-fx="dst" data-id="${part.id}" title="Distortion Send">DST</button>
+                    </div>
+                `;
+            });
+            tracksHtml += '</div>';
+
+            let drumHtml = '';
+            drumTracks.forEach((inst, rIdx) => {
+                drumHtml += `<div class="seq-row">
+                    <div class="seq-label">${inst.label}</div>`;
+                for(let c=0; c<part.timeSig; c++) {
+                    const active = part.drums[rIdx][c] ? 'active' : '';
+                    drumHtml += `<div class="step ${active}" data-row="${rIdx}" data-col="${c}"></div>`;
+                }
+                drumHtml += `</div>`;
+            });
+
+            const arpLabels = ['+OCT', '7', '6', '5', '4', '3', '2', 'ROOT'];
+            let arpHtml = '';
+            for(let r=7; r>=0; r--) {
+                arpHtml += `<div class="seq-row">
+                    <div class="seq-label">${arpLabels[7-r]}</div>`;
+                for(let c=0; c<part.timeSig; c++) {
+                    const active = (part.melData[c] === r) ? 'active' : '';
+                    arpHtml += `<div class="step mel-step ${active}" data-row="${r}" data-col="${c}"></div>`;
+                }
+                arpHtml += `</div>`;
+            }
+
+            let bassHtml = '';
+            for(let r=7; r>=0; r--) {
+                bassHtml += `<div class="seq-row">
+                    <div class="seq-label">${arpLabels[7-r]}</div>`;
+                for(let c=0; c<part.timeSig; c++) {
+                    const active = (part.bassData && part.bassData[c] === r) ? 'active' : '';
+                    bassHtml += `<div class="step bass-step ${active}" data-row="${r}" data-col="${c}"></div>`;
+                }
+                bassHtml += `</div>`;
+            }
+
+            panel.innerHTML = `
+                <h2>
+                    <span style="display:flex; align-items:center; flex-wrap:wrap; gap:5px;">
+                        <button class="loop-btn ${isLoop}" data-id="${part.id}">${loopText}</button> 
+                        <span style="color:var(--nes-blue)">${part.name}</span>
+                    </span>
+                    <span style="display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="top-play-toggle${isPlaying ? ' playing' : ''}" title="${isPlaying ? 'Pause' : 'Play'}" aria-label="${isPlaying ? 'Pause' : 'Play'}">${isPlaying ? '▮▮' : 'PLAY'}</button>
+                        <a href="#panel_mixer" class="top-link" title="Jump to Console Mixer">▲ MIX</a>
+                        <a href="#panel_synth_controls" class="top-link" title="Jump to Synths">▼ SYNTHS</a>
+                        <button class="dup-part-btn" data-id="${part.id}" style="color:var(--nes-cyan); border-color:var(--nes-cyan);">+ COPY</button>
+                        <button class="minmax-btn">-</button>
+                    </span>
+                </h2>
+                <div class="part-body">
+                    <div class="control-row" style="margin-bottom: 12px;">
+                        <div class="knob" style="flex: 2; min-width: 180px;">
+                            <label>BPM (<span class="part-bpm-val" data-id="${part.id}">${part.bpm}</span>)</label>
+                            <div style="display:flex; align-items:center; width:100%; gap:5px;">
+                                <button class="part-bpm-minus" data-id="${part.id}" style="padding: 4px 8px;">-</button>
+                                <input type="range" class="part-bpm-slider" data-id="${part.id}" min="8" max="256" value="${part.bpm}" style="flex:1;">
+                                <button class="part-bpm-plus" data-id="${part.id}" style="padding: 4px 8px;">+</button>
+                            </div>
+                        </div>
+                        <div class="knob">
+                            <label>TIME SIG</label>
+                            <select class="part-timesig" data-id="${part.id}" style="width:100%;">
+                                <option value="8" ${part.timeSig===8?'selected':''}>2/4</option>
+                                <option value="12" ${part.timeSig===12?'selected':''}>3/4</option>
+                                <option value="16" ${part.timeSig===16?'selected':''}>4/4</option>
+                                <option value="20" ${part.timeSig===20?'selected':''}>5/4</option>
+                                <option value="28" ${part.timeSig===28?'selected':''}>7/4</option>
+                            </select>
+                        </div>
+                        <div class="knob">
+                            <label>KEY</label>
+                            <select class="part-key-root" data-id="${part.id}" style="width:100%;">${keyOptionsHtml}</select>
+                        </div>
+                        <div class="knob" style="flex: 1.5; min-width: 140px;">
+                            <label>SCALE</label>
+                            <select class="part-key-mode" data-id="${part.id}" style="width:100%;">${scaleOptionsHtml}</select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:8px; margin-bottom:4px; color:#aaa;">TRACK ACTIVATION & FX SENDS</div>
+                        ${tracksHtml}
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size:8px; margin-bottom:5px; color:#aaa;">CHORD SEQUENCE</div>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <div id="chords_${part.id}" class="chord-timeline" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; border: 2px dashed #444; padding: 10px; min-width: 100px; min-height: 20px; max-width: 100%; box-sizing: border-box;"></div>
+                            <select class="add-chord-select" data-id="${part.id}">${getChordSelectHTML(part.keyMode)}</select>
+                        </div>
+                    </div>
+                    
+                    <div class="seq-block">
+                        <div class="seq-block-header">
+                            <div style="font-size:8px; color:#aaa;">01 DRUM PATTERN</div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="clear-drums-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                                <button class="toggle-drums-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                            </div>
+                        </div>
+                        <div id="drumContainer_${part.id}" class="seq-grid" style="--steps: ${part.timeSig}">
+                            ${drumHtml}
+                        </div>
+                    </div>
+
+                    <div class="seq-block" style="margin-top:15px;">
+                        <div class="seq-block-header">
+                            <div style="font-size:8px; color:#aaa;">02 BASS GRID</div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="clear-bass-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                                <button class="toggle-bass-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                            </div>
+                        </div>
+                        <div id="bassContainer_${part.id}" class="seq-grid" style="--steps: ${part.timeSig}">
+                            ${bassHtml}
+                        </div>
+                    </div>
+
+                    <div class="seq-block" style="margin-top:15px;">
+                        <div class="seq-block-header">
+                            <div style="font-size:8px; color:#aaa;">03 MELO GRID</div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="clear-arp-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
+                                <button class="toggle-arp-btn" data-id="${part.id}" style="font-size:8px; padding:2px 6px;">- MINIMIZE</button>
+                            </div>
+                        </div>
+                        <div id="arpContainer_${part.id}" class="seq-grid" style="--steps: ${part.timeSig}">
+                            ${arpHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(panel);
+            renderChordsForPart(part.id);
+            
+            if(scrollPositions[`drumContainer_${part.id}`]) {
+                panel.querySelector(`#drumContainer_${part.id}`).scrollLeft = scrollPositions[`drumContainer_${part.id}`];
+            }
+            if(scrollPositions[`arpContainer_${part.id}`]) {
+                panel.querySelector(`#arpContainer_${part.id}`).scrollLeft = scrollPositions[`arpContainer_${part.id}`];
+            }
+            if(scrollPositions[`bassContainer_${part.id}`]) {
+                panel.querySelector(`#bassContainer_${part.id}`).scrollLeft = scrollPositions[`bassContainer_${part.id}`];
+            }
+        });
+        updatePartJumpLinks();
+    }
+
+    let draggedChordPartId = null;
+    let draggedChordIdx = null;
+
+    function renderChordsForPart(id) {
+        const t = document.getElementById(`chords_${id}`);
+        if(!t || !songParts[id]) return;
+        const labels = scaleLabelsMap[songParts[id].keyMode] || scaleLabelsMap.minor;
+        t.innerHTML = '';
+        songParts[id].chords.forEach((deg, idx) => {
+            const b = document.createElement('div');
+            b.className = 'chord-block';
+            b.draggable = true;
+            b.dataset.partId = id;
+            b.dataset.idx = idx;
+            b.innerText = labels[deg % labels.length] || '?';
+
+            b.ondragstart = (e) => {
+                draggedChordPartId = id;
+                draggedChordIdx = idx;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => b.style.opacity = '0.5', 0);
+            };
+            b.ondragend = () => {
+                draggedChordPartId = null;
+                draggedChordIdx = null;
+                b.style.opacity = '1';
+                t.querySelectorAll('.chord-block').forEach(el => el.style.borderColor = '');
+            };
+            b.ondragover = (e) => {
+                e.preventDefault();
+                if (draggedChordPartId === id && draggedChordIdx !== null && draggedChordIdx !== idx) {
+                    b.style.borderColor = 'var(--nes-red)';
+                }
+            };
+            b.ondragleave = () => {
+                b.style.borderColor = '';
+            };
+            b.ondrop = (e) => {
+                e.preventDefault();
+                b.style.borderColor = '';
+                if (draggedChordPartId === id && draggedChordIdx !== null && draggedChordIdx !== idx) {
+                    const chords = songParts[id].chords;
+                    const [movedChord] = chords.splice(draggedChordIdx, 1);
+                    chords.splice(idx, 0, movedChord);
+                    draggedChordPartId = null;
+                    draggedChordIdx = null;
+                    renderChordsForPart(id);
+                }
+            };
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isTouchDragging = false;
+            b.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('remove-btn') || e.touches.length !== 1) return;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isTouchDragging = false;
+            }, { passive: true });
+            b.addEventListener('touchmove', (e) => {
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                if (!isTouchDragging && Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY) > 8) {
+                    isTouchDragging = true;
+                    b.style.opacity = '0.5';
+                }
+                if (isTouchDragging) {
+                    e.preventDefault();
+                    t.querySelectorAll('.chord-block').forEach(el => el.style.borderColor = '');
+                    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.chord-block');
+                    if (targetEl && targetEl.dataset.partId === id && parseInt(targetEl.dataset.idx) !== idx) {
+                        targetEl.style.borderColor = 'var(--nes-red)';
+                    }
+                }
+            }, { passive: false });
+            b.addEventListener('touchend', (e) => {
+                b.style.opacity = '1';
+                t.querySelectorAll('.chord-block').forEach(el => el.style.borderColor = '');
+                if (isTouchDragging && e.changedTouches.length > 0) {
+                    const touch = e.changedTouches[0];
+                    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.chord-block');
+                    if (targetEl && targetEl.dataset.partId === id) {
+                        const targetIdx = parseInt(targetEl.dataset.idx);
+                        if (!isNaN(targetIdx) && targetIdx !== idx) {
+                            const chords = songParts[id].chords;
+                            const [movedChord] = chords.splice(idx, 1);
+                            chords.splice(targetIdx, 0, movedChord);
+                            renderChordsForPart(id);
+                        }
+                    }
+                }
+                isTouchDragging = false;
+            });
+
+            const rm = document.createElement('div');
+            rm.className = 'remove-btn';
+            rm.dataset.id = id;
+            rm.dataset.idx = idx;
+            rm.innerText = 'X';
+            b.appendChild(rm);
+            t.appendChild(b);
+        });
+    }
+
+    document.getElementById('parts_container').addEventListener('click', e => {
+        if(e.target.classList.contains('step') && !e.target.classList.contains('mel-step') && !e.target.classList.contains('bass-step')) {
+            const r = e.target.dataset.row;
+            const c = e.target.dataset.col;
+            const id = e.target.closest('.part-panel').dataset.id;
+            songParts[id].drums[r][c] = !songParts[id].drums[r][c];
+            e.target.classList.toggle('active');
+        }
+        else if(e.target.classList.contains('mel-step')) {
+            const r = parseInt(e.target.dataset.row);
+            const c = parseInt(e.target.dataset.col);
+            const id = e.target.closest('.part-panel').dataset.id;
+            
+            if (songParts[id].melData[c] === r) {
+                songParts[id].melData[c] = null;
+                e.target.classList.remove('active');
+            } else {
+                songParts[id].melData[c] = r;
+                e.target.closest('.seq-grid').querySelectorAll(`.mel-step[data-col="${c}"]`).forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        }
+        else if(e.target.classList.contains('bass-step')) {
+            const r = parseInt(e.target.dataset.row);
+            const c = parseInt(e.target.dataset.col);
+            const id = e.target.closest('.part-panel').dataset.id;
+            
+            if (songParts[id].bassData[c] === r) {
+                songParts[id].bassData[c] = null;
+                e.target.classList.remove('active');
+            } else {
+                songParts[id].bassData[c] = r;
+                e.target.closest('.seq-grid').querySelectorAll(`.bass-step[data-col="${c}"]`).forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        }
+        else if(e.target.classList.contains('track-toggle-item')) {
+            const trk = e.target.dataset.track;
+            const id = e.target.dataset.id;
+            songParts[id].tracksActive[trk] = !songParts[id].tracksActive[trk];
+            renderParts();
+        }
+        else if(e.target.classList.contains('fx-icon-btn')) {
+            const trk = e.target.dataset.track;
+            const fxKey = e.target.dataset.fx;
+            const id = e.target.dataset.id;
+            songParts[id].fxActive[trk][fxKey] = !songParts[id].fxActive[trk][fxKey];
+            renderParts();
+        }
+        else if(e.target.classList.contains('part-bpm-minus')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if(part) {
+                part.bpm = Math.max(8, part.bpm - 1);
+                const panel = e.target.closest('.part-panel');
+                panel.querySelector('.part-bpm-slider').value = part.bpm;
+                panel.querySelector('.part-bpm-val').innerText = part.bpm;
+                if (getActivePart().id === id) updateDelayTime(part.bpm);
+            }
+        }
+        else if(e.target.classList.contains('part-bpm-plus')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if(part) {
+                part.bpm = Math.min(256, part.bpm + 1);
+                const panel = e.target.closest('.part-panel');
+                panel.querySelector('.part-bpm-slider').value = part.bpm;
+                panel.querySelector('.part-bpm-val').innerText = part.bpm;
+                if (getActivePart().id === id) updateDelayTime(part.bpm);
+            }
+        }
+        else if(e.target.classList.contains('dup-part-btn')) {
+            const id = e.target.dataset.id;
+            const srcPart = songParts[id];
+            if(srcPart) {
+                const newId = createPart(
+                    srcPart.name, 
+                    srcPart.timeSig, 
+                    srcPart.tracksActive, 
+                    srcPart.fxActive,
+                    srcPart.drums, 
+                    srcPart.melData, 
+                    srcPart.bassData, 
+                    srcPart.chords,
+                    srcPart.bpm,
+                    srcPart.keyRoot,
+                    srcPart.keyMode
+                );
+                partOrder.push(newId);
+                renderSongProgression();
+            }
+        }
+        else if(e.target.classList.contains('loop-btn')) {
+            const id = e.target.dataset.id;
+            loopPartId = (loopPartId === id) ? null : id;
+            renderParts();
+            const activePart = getActivePart();
+            if (activePart && activePart.timeSig) {
+                if (sq1LockTimeSig && sq1Steps !== activePart.timeSig) { sq1Steps = activePart.timeSig; renderArpGrid(); }
+                if (sq2LockTimeSig && sq2Steps !== activePart.timeSig) { sq2Steps = activePart.timeSig; renderPolyGrid(); }
+                if (sq3LockTimeSig && sq3Steps !== activePart.timeSig) { sq3Steps = activePart.timeSig; renderNoiseGrid(); }
+            }
+        }
+        else if(e.target.classList.contains('minmax-btn')) {
+            const body = e.target.closest('.part-panel').querySelector('.part-body');
+            const isHidden = body.style.display === 'none';
+            body.style.display = isHidden ? 'block' : 'none';
+            e.target.innerText = isHidden ? '-' : '+';
+        }
+        else if(e.target.classList.contains('clear-drums-btn')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if (!part) return;
+            if (!confirm(`Clear 01 DRUM PATTERN in "${part.name}"?`)) return;
+            part.drums.forEach(row => row.fill(false));
+            const container = document.getElementById(`drumContainer_${id}`);
+            if (container) container.querySelectorAll('.step.active').forEach(el => el.classList.remove('active'));
+        }
+        else if(e.target.classList.contains('clear-bass-btn')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if (!part) return;
+            if (!confirm(`Clear 02 BASS GRID in "${part.name}"?`)) return;
+            part.bassData.fill(null);
+            const container = document.getElementById(`bassContainer_${id}`);
+            if (container) container.querySelectorAll('.step.active').forEach(el => el.classList.remove('active'));
+        }
+        else if(e.target.classList.contains('clear-arp-btn')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if (!part) return;
+            if (!confirm(`Clear 03 MELO GRID in "${part.name}"?`)) return;
+            part.melData.fill(null);
+            const container = document.getElementById(`arpContainer_${id}`);
+            if (container) container.querySelectorAll('.step.active').forEach(el => el.classList.remove('active'));
+        }
+        else if(e.target.classList.contains('toggle-drums-btn')) {
+            const id = e.target.dataset.id;
+            const container = document.getElementById(`drumContainer_${id}`);
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'flex' : 'none';
+            e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+        }
+        else if(e.target.classList.contains('toggle-arp-btn')) {
+            const id = e.target.dataset.id;
+            const container = document.getElementById(`arpContainer_${id}`);
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'flex' : 'none';
+            e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+        }
+        else if(e.target.classList.contains('toggle-bass-btn')) {
+            const id = e.target.dataset.id;
+            const container = document.getElementById(`bassContainer_${id}`);
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'flex' : 'none';
+            e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+        }
+        else if(e.target.classList.contains('remove-btn')) {
+            const id = e.target.dataset.id;
+            const idx = e.target.dataset.idx;
+            songParts[id].chords.splice(idx, 1);
+            renderChordsForPart(id);
+        }
+    });
+
+    document.getElementById('parts_container').addEventListener('input', e => {
+        if(e.target.classList.contains('part-bpm-slider')) {
+            const id = e.target.dataset.id;
+            const part = songParts[id];
+            if(part) {
+                part.bpm = parseInt(e.target.value);
+                e.target.closest('.knob').querySelector('.part-bpm-val').innerText = part.bpm;
+                if (getActivePart().id === id) updateDelayTime(part.bpm);
+            }
+        }
+    });
+
+    document.getElementById('parts_container').addEventListener('change', e => {
+        if(e.target.classList.contains('part-timesig')) {
+            const id = e.target.dataset.id;
+            songParts[id].timeSig = parseInt(e.target.value);
+            renderParts();
+            if (getActivePart().id === id) {
+                if (sq1LockTimeSig) {
+                    sq1Steps = songParts[id].timeSig;
+                    renderArpGrid();
+                }
+                if (sq2LockTimeSig) {
+                    sq2Steps = songParts[id].timeSig;
+                    renderPolyGrid();
+                }
+                if (sq3LockTimeSig) {
+                    sq3Steps = songParts[id].timeSig;
+                    renderNoiseGrid();
+                }
+            }
+        }
+        else if(e.target.classList.contains('part-key-root')) {
+            const id = e.target.dataset.id;
+            songParts[id].keyRoot = parseInt(e.target.value);
+            if (getActivePart().id === id) renderKeyboard();
+        }
+        else if(e.target.classList.contains('part-key-mode')) {
+            const id = e.target.dataset.id;
+            const newMode = e.target.value;
+            songParts[id].keyMode = newMode;
+            const chordSel = e.target.closest('.part-panel').querySelector('.add-chord-select');
+            if(chordSel) {
+                chordSel.innerHTML = getChordSelectHTML(newMode);
+            }
+            renderChordsForPart(id);
+            if (getActivePart().id === id) renderKeyboard();
+        }
+        else if(e.target.classList.contains('add-chord-select')) {
+            const id = e.target.dataset.id;
+            const degree = parseInt(e.target.value);
+            if(!isNaN(degree)) {
+                songParts[id].chords.push(degree);
+                e.target.value = ""; 
+                renderChordsForPart(id);
+            }
+        }
+    });
+
+    // --- Music Theory ---
+    const scaleLabelsMap = {
+        major: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'], minor: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'],
+        dorian: ['i', 'ii', 'III', 'IV', 'v', 'vi°', 'VII'], phrygian: ['i', 'II', 'III', 'iv', 'v°', 'VI', 'vii'],
+        lydian: ['I', 'II', 'iii', '#iv°', 'V', 'vi', 'vii'], mixolydian: ['I', 'ii', 'iii°', 'IV', 'v', 'vi', 'VII'],
+        locrian: ['i°', 'II', 'iii', 'iv', 'V', 'VI', 'vii'], harm_min: ['i', 'ii°', 'III+', 'iv', 'V', 'VI', 'vii°'],
+        mel_min: ['i', 'ii', 'III+', 'IV', 'V', 'vi°', 'vii°'], pent_maj: ['I', 'II', 'III', 'V', 'VI'],
+        pent_min: ['i(1)', 'III(m3)', 'iv(4)', 'v(5)', 'VII(m7)'], blues: ['1', 'b3', '4', '#4', '5', 'b7'],
+        whole_tone: ['1', '2', '3', '#4', '#5', 'b7'], chromatic: ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'],
+        hirajoshi: ['1', '2', 'b3', '5', 'b6'], arabian: ['1', 'b2', '3', '4', '5', 'b6', '7']
+    };
+    const scales = {
+        major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10],
+        phrygian: [0, 1, 3, 5, 7, 8, 10], lydian: [0, 2, 4, 6, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10],
+        locrian: [0, 1, 3, 5, 6, 8, 10], harm_min: [0, 2, 3, 5, 7, 8, 11], mel_min: [0, 2, 3, 5, 7, 9, 11],
+        pent_maj: [0, 2, 4, 7, 9], pent_min: [0, 3, 5, 7, 10], blues: [0, 3, 5, 6, 7, 10],
+        whole_tone: [0, 2, 4, 6, 8, 10], chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        hirajoshi: [0, 2, 3, 7, 8], arabian: [0, 1, 4, 5, 7, 8, 11]
+    };
+
+    function mToF(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+    
+    function getScaleNotes(octave, currentDegree, keyRoot = 4, keyMode = 'minor') {
+        const rootMidi = (octave * 12) + 12 + parseInt(keyRoot);
+        const scale = scales[keyMode] || scales.minor;
+        let notes = [];
+        for(let i=0; i<14; i++) {
+            let actualIdx = i + currentDegree;
+            let octShift = Math.floor(actualIdx / scale.length);
+            let noteInterval = scale[actualIdx % scale.length] + (octShift * 12);
+            notes.push(mToF(rootMidi + noteInterval));
+        }
+        return notes;
+    }
+
+    // Render 2-Octave Keyboard (follows active song part's Key & Scale)
+    function renderKeyboard() {
+        const kb = document.getElementById('pianoKeyboard');
+        kb.innerHTML = '';
+        const activePart = getActivePart();
+        const root = parseInt(activePart.keyRoot);
+        const scale = scales[activePart.keyMode] || scales.minor;
+        
+        for(let i=0; i<14; i++) {
+            let octShift = Math.floor(i / scale.length);
+            let midiVal = 48 + root + scale[i % scale.length] + (octShift * 12);
+            let freq = mToF(midiVal);
+            
+            const key = document.createElement('div');
+            key.className = 'piano-key';
+            key.innerText = (i + 1);
+            key.onmousedown = () => triggerPerfNote(freq, key);
+            kb.appendChild(key);
+        }
+    }
+
+    // --- Audio Init & FX DSP Chain ---
+    function updateMixerGain(track) {
+        if(!buses[track]) return;
+        const val = Math.pow(parseFloat(document.getElementById(track + '_vol').value), 2);
+        const anySolo = Object.values(isSoloed).some(v => v);
+        let effMuted = anySolo ? !isSoloed[track] : isMuted[track];
+        buses[track].gain.setTargetAtTime(effMuted ? 0 : val, audioCtx.currentTime, 0.015);
+    }
+
+    document.querySelectorAll('.mute-btn').forEach(btn => btn.onclick = (e) => {
+        const trk = e.target.dataset.track; isMuted[trk] = !isMuted[trk];
+        e.target.classList.toggle('muted', isMuted[trk]);
+        if(audioCtx) updateMixerGain(trk);
+    });
+    document.querySelectorAll('.solo-btn').forEach(btn => btn.onclick = (e) => {
+        const trk = e.target.dataset.track; isSoloed[trk] = !isSoloed[trk];
+        e.target.classList.toggle('active', isSoloed[trk]);
+        Object.keys(buses).forEach(t => { if(audioCtx) updateMixerGain(t); });
+    });
+    document.querySelectorAll('.fader').forEach(f => f.oninput = (e) => {
+        const trk = e.target.id.split('_')[0]; if(audioCtx) updateMixerGain(trk);
+    });
+
+    function updateMasterVolume() {
+        const slider = document.getElementById('masterVol');
+        const label = document.getElementById('masterVolVal');
+        if (!slider) return;
+        const val = Math.max(0, Math.min(1, parseFloat(slider.value) || 0));
+        if (label) label.innerText = Math.round(val * 100) + '%';
+        if (audioCtx && masterGain) {
+            masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+            masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.015);
+        }
+    }
+
+    const masterVolSlider = document.getElementById('masterVol');
+    if (masterVolSlider) {
+        masterVolSlider.addEventListener('input', updateMasterVolume);
+        masterVolSlider.addEventListener('change', updateMasterVolume);
+        updateMasterVolume();
+    }
+
+    function initAudio() {
+        if(audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain(); 
+        masterGain.gain.value = parseFloat(document.getElementById('masterVol').value);
+        
+        ['sq1', 'sq2', 'sq3', 'tri', 'mel', 'noi'].forEach(t => {
+            buses[t] = audioCtx.createGain(); buses[t].connect(masterGain);
+        });
+
+        // --- Build Advanced FX DSP Nodes with Wet/Dry Mix Busses ---
+        
+        // 1. DELAY BUS
+        fxNodes.delayInput = audioCtx.createGain();
+        fxNodes.delayNode = audioCtx.createDelay(4.0);
+        fxNodes.delayFeedback = audioCtx.createGain();
+        fxNodes.delayFeedback.gain.value = 0.02;
+        fxNodes.delayFilter = audioCtx.createBiquadFilter();
+        fxNodes.delayFilter.type = 'lowpass';
+        fxNodes.delayFilter.frequency.value = 4000;
+        fxNodes.delayWet = audioCtx.createGain();
+        fxNodes.delayWet.gain.value = 0.08;
+
+        fxNodes.delayInput.connect(fxNodes.delayNode);
+        fxNodes.delayNode.connect(fxNodes.delayFilter);
+        fxNodes.delayFilter.connect(fxNodes.delayFeedback);
+        fxNodes.delayFeedback.connect(fxNodes.delayNode);
+        fxNodes.delayFilter.connect(fxNodes.delayWet);
+        fxNodes.delayWet.connect(masterGain);
+
+        // 2. REVERB BUS
+        fxNodes.reverbInput = audioCtx.createGain();
+        fxNodes.reverbNode = audioCtx.createConvolver();
+        updateReverbImpulse();
+        fxNodes.reverbWet = audioCtx.createGain();
+        fxNodes.reverbWet.gain.value = 0.08;
+
+        fxNodes.reverbInput.connect(fxNodes.reverbNode);
+        fxNodes.reverbNode.connect(fxNodes.reverbWet);
+        fxNodes.reverbWet.connect(masterGain);
+
+        // 3. CHORUS BUS
+        fxNodes.chorusInput = audioCtx.createGain();
+        fxNodes.chorusDelay = audioCtx.createDelay(0.1);
+        fxNodes.chorusDelay.delayTime.value = 0.025;
+        fxNodes.chorusWet = audioCtx.createGain();
+        fxNodes.chorusWet.gain.value = 0.08;
+
+        fxNodes.chorusInput.connect(fxNodes.chorusDelay);
+        fxNodes.chorusDelay.connect(fxNodes.chorusWet);
+        fxNodes.chorusWet.connect(masterGain);
+
+        // 4. DISTORTION BUS
+        fxNodes.distInput = audioCtx.createGain();
+        fxNodes.distShaper = audioCtx.createWaveShaper();
+        fxNodes.distShaper.curve = makeDistortionCurve(8);
+        fxNodes.distFilter = audioCtx.createBiquadFilter();
+        fxNodes.distFilter.type = 'lowpass';
+        fxNodes.distFilter.frequency.value = 4000;
+        fxNodes.distWet = audioCtx.createGain();
+        fxNodes.distWet.gain.value = 0.08;
+
+        fxNodes.distInput.connect(fxNodes.distShaper);
+        fxNodes.distShaper.connect(fxNodes.distFilter);
+        fxNodes.distFilter.connect(fxNodes.distWet);
+        fxNodes.distWet.connect(masterGain);
+
+        // --- Bind UI Controls to FX Parameters ---
+        updateDelayTime();
+        document.getElementById('fx_delay_time').onchange = () => updateDelayTime();
+        document.getElementById('fx_delay_feedback').oninput = e => fxNodes.delayFeedback.gain.value = parseFloat(e.target.value);
+        document.getElementById('fx_delay_damping').oninput = e => fxNodes.delayFilter.frequency.value = parseFloat(e.target.value);
+        document.getElementById('fx_delay_mix').oninput = e => fxNodes.delayWet.gain.value = parseFloat(e.target.value);
+
+        document.getElementById('fx_reverb_room').oninput = updateReverbImpulse;
+        document.getElementById('fx_reverb_decay').oninput = updateReverbImpulse;
+        document.getElementById('fx_reverb_mix').oninput = e => fxNodes.reverbWet.gain.value = parseFloat(e.target.value);
+
+        document.getElementById('fx_chorus_depth').oninput = e => fxNodes.chorusDelay.delayTime.value = parseFloat(e.target.value);
+        document.getElementById('fx_chorus_mix').oninput = e => fxNodes.chorusWet.gain.value = parseFloat(e.target.value);
+
+        document.getElementById('fx_dist_drive').oninput = e => fxNodes.distShaper.curve = makeDistortionCurve(parseFloat(e.target.value));
+        document.getElementById('fx_dist_tone').oninput = e => fxNodes.distFilter.frequency.value = parseFloat(e.target.value);
+        document.getElementById('fx_dist_mix').oninput = e => fxNodes.distWet.gain.value = parseFloat(e.target.value);
+
+        analyser = audioCtx.createAnalyser(); analyser.fftSize = 2048;
+        masterGain.connect(analyser); analyser.connect(audioCtx.destination);
+        Object.keys(buses).forEach(t => updateMixerGain(t));
+        updateMasterVolume();
+        drawScope();
+    }
+
+    function updateDelayTime(bpmOverride) {
+        if(!audioCtx) return;
+        const bpm = bpmOverride !== undefined ? parseFloat(bpmOverride) : parseFloat(getActivePart().bpm || 86);
+        const beatSec = 60.0 / bpm;
+        const multiplier = parseFloat(document.getElementById('fx_delay_time').value);
+        fxNodes.delayNode.delayTime.value = beatSec * 4 * multiplier; // 1.0 = 1 Bar (4 beats)
+    }
+
+    function updateReverbImpulse() {
+        if(!audioCtx) return;
+        const roomSize = parseFloat(document.getElementById('fx_reverb_room').value);
+        const decaySec = parseFloat(document.getElementById('fx_reverb_decay').value);
+        const rate = audioCtx.sampleRate;
+        const length = rate * decaySec;
+        const impulse = audioCtx.createBuffer(2, length, rate);
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+        for (let i = 0; i < length; i++) {
+            let decay = Math.exp(-i / (rate * (decaySec * roomSize)));
+            left[i] = (Math.random() * 2 - 1) * decay;
+            right[i] = (Math.random() * 2 - 1) * decay;
+        }
+        fxNodes.reverbNode.buffer = impulse;
+    }
+
+    function makeDistortionCurve(amount) {
+        let k = typeof amount === 'number' ? amount : 8,
+            n_samples = 44100,
+            curve = new Float32Array(n_samples),
+            deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+            let x = (i * 2) / n_samples - 1;
+            curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    }
+
+    function routeToFxSends(sourceNode, fxActiveObj) {
+        if(!audioCtx) return;
+        if(fxActiveObj.dly) sourceNode.connect(fxNodes.delayInput);
+        if(fxActiveObj.rev) sourceNode.connect(fxNodes.reverbInput);
+        if(fxActiveObj.chs) sourceNode.connect(fxNodes.chorusInput);
+        if(fxActiveObj.dst) sourceNode.connect(fxNodes.distInput);
+    }
+
+    function drawScope() {
+        requestAnimationFrame(drawScope); 
+        if(!analyser) return;
+        const bufLen = analyser.frequencyBinCount; 
+        const data = new Uint8Array(bufLen); 
+        analyser.getByteTimeDomainData(data);
+        const canvas = document.getElementById('scope'); const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0F380F'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 4; ctx.strokeStyle = '#00B800'; ctx.beginPath();
+        const sliceW = canvas.width / bufLen; let x = 0;
+        for(let i=0; i<bufLen; i++) {
+            const v = data[i] / 128.0; const y = v * canvas.height / 2;
+            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            x += sliceW;
+        }
+        ctx.lineTo(canvas.width, canvas.height/2); ctx.stroke();
+    }
+
+    // Cache authentic DMG-01 PeriodicWaves (Pulse Duties + 32-sample 4-bit Wave RAM)
+    const gbWaveCache = {};
+    function getGBPeriodicWave(type) {
+        if (gbWaveCache[type]) return gbWaveCache[type];
+
+        // 1. Hardware Pulse Channels (12.5%, 25%, 50%, 75% duty cycles via exact Fourier series)
+        const dutyMap = { gb_pu12: 0.125, gb_pu25: 0.25, gb_pu50: 0.5, gb_pu75: 0.75 };
+        if (dutyMap[type] !== undefined) {
+            const d = dutyMap[type];
+            const harmonics = 32;
+            const real = new Float32Array(harmonics);
+            const imag = new Float32Array(harmonics);
+            for (let n = 1; n < harmonics; n++) {
+                real[n] = (2 / (n * Math.PI)) * Math.sin(2 * Math.PI * n * d);
+                imag[n] = (2 / (n * Math.PI)) * (1 - Math.cos(2 * Math.PI * n * d));
+            }
+            gbWaveCache[type] = audioCtx.createPeriodicWave(real, imag, { disableNormalization: false });
+            return gbWaveCache[type];
+        }
+
+        // 2. Channel 3: 32-Sample, 4-Bit (16-step quantized) Programmable Wave RAM
+        const N = 32;
+        const ram = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+            let v = 7.5;
+            if (type === 'gb_wav_tri') {
+                // Classic Game Boy 32-step 4-bit triangle (0..15..0)
+                v = i < 16 ? i : (31 - i);
+            } else if (type === 'gb_wav_saw') {
+                // 4-bit quantized ramp (0..15)
+                v = Math.floor((i / N) * 16);
+            } else if (type === 'gb_wav_bass') {
+                // Punchy harmonic-rich GB sub bass table
+                const raw = Math.sin((2 * Math.PI * i) / N) + 0.55 * Math.sin((4 * Math.PI * i) / N) + 0.25 * Math.cos((6 * Math.PI * i) / N);
+                v = Math.max(0, Math.min(15, Math.round(((raw + 1.8) / 3.6) * 15)));
+            } else if (type === 'gb_wav_soft') {
+                // Rounded 4-bit sine/flute table (Link's Awakening / Pokemon style)
+                const raw = Math.sin((2 * Math.PI * i) / N) + 0.18 * Math.sin((6 * Math.PI * i) / N);
+                v = Math.max(0, Math.min(15, Math.round(((raw + 1.18) / 2.36) * 15)));
+            } else if (type === 'gb_wav_pwm') {
+                // Dual-pulse detuned chorus wave table
+                const raw = (i < 10 ? 1 : -1) + (i > 6 && i < 22 ? 0.8 : -0.8);
+                v = Math.max(0, Math.min(15, Math.round(((raw + 1.8) / 3.6) * 15)));
+            }
+            // Quantize strictly to 4-bit DAC levels (0..15) centered around 7.5
+            ram[i] = (Math.round(v) - 7.5) / 7.5;
+        }
+
+        const real = new Float32Array(17);
+        const imag = new Float32Array(17);
+        for (let k = 1; k <= 16; k++) {
+            let re = 0, im = 0;
+            for (let n = 0; n < N; n++) {
+                const angle = (2 * Math.PI * k * n) / N;
+                re += ram[n] * Math.cos(angle);
+                im -= ram[n] * Math.sin(angle);
+            }
+            real[k] = (2 / N) * re;
+            imag[k] = (2 / N) * im;
+        }
+        gbWaveCache[type] = audioCtx.createPeriodicWave(real, imag, { disableNormalization: false });
+        return gbWaveCache[type];
+    }
+
+    function playTone(freq, time, type, bus, decayAmt, fxActiveObj, gainScale = 1.0) {
+        const osc = audioCtx.createOscillator();
+        const env = audioCtx.createGain();
+        const stopTime = time + decayAmt * 5.0;
+
+        if (type && type.startsWith('gb_')) {
+            osc.setPeriodicWave(getGBPeriodicWave(type));
+        } else {
+            osc.type = type || 'square';
+        }
+        osc.frequency.setValueAtTime(freq, time);
+
+        // Authentic 4-bit stepped envelope feel with crisp DMG-01 transient
+        const peak = 0.85 * gainScale;
+        env.gain.setValueAtTime(0.001, time);
+        env.gain.linearRampToValueAtTime(peak, time + 0.002);
+        env.gain.setTargetAtTime(0.001, time + 0.002, decayAmt);
+
+        osc.connect(env);
+        env.connect(bus);
+        routeToFxSends(env, fxActiveObj);
+        osc.start(time);
+        osc.stop(stopTime);
+    }
+
+    function playNoiseSynth(freq, time, bus, decayAmt, fxActiveObj) {
+        const noiseType = document.getElementById('sq3_noise_type') ? document.getElementById('sq3_noise_type').value : 'white';
+        const filterType = document.getElementById('sq3_filter_type') ? document.getElementById('sq3_filter_type').value : 'bandpass';
+        const resonance = document.getElementById('sq3_res') ? parseFloat(document.getElementById('sq3_res').value) : 4.0;
+        const crush = document.getElementById('sq3_crush') ? parseInt(document.getElementById('sq3_crush').value) : 1;
+        const sweep = document.getElementById('sq3_sweep') ? parseInt(document.getElementById('sq3_sweep').value) : 0;
+
+        const duration = Math.max(0.08, decayAmt * 5.2);
+        const sampleRate = audioCtx.sampleRate;
+        const bufferSize = Math.ceil(sampleRate * duration);
+        const buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        if (noiseType === 'metallic') {
+            // 15-bit NES-style short LFSR (93-step period) clocked proportionally to pitch
+            let lfsr = 0x4000;
+            const clockFreq = Math.max(120, freq * 16) / crush;
+            const samplesPerClock = Math.max(1, sampleRate / clockFreq);
+            let counter = 0;
+            let currentSample = 1.0;
+            for (let i = 0; i < bufferSize; i++) {
+                counter += 1;
+                if (counter >= samplesPerClock) {
+                    counter -= samplesPerClock;
+                    const feedback = ((lfsr >> 0) ^ (lfsr >> 6)) & 1;
+                    lfsr = (lfsr >> 1) | (feedback << 14);
+                    currentSample = (lfsr & 1) ? 0.85 : -0.85;
+                }
+                data[i] = currentSample;
+            }
+        } else if (noiseType === 'crushed') {
+            // Sample-and-hold noise clocked to note pitch & crush divider
+            const clockFreq = Math.max(80, freq * 4) / crush;
+            const samplesPerClock = Math.max(1, sampleRate / clockFreq);
+            let counter = 0;
+            let holdVal = Math.random() * 2 - 1;
+            for (let i = 0; i < bufferSize; i++) {
+                counter += 1;
+                if (counter >= samplesPerClock) {
+                    counter -= samplesPerClock;
+                    holdVal = Math.random() * 2 - 1;
+                }
+                data[i] = holdVal;
+            }
+        } else if (noiseType === 'pink') {
+            // Paul Kellet pink noise filter with optional crush hold
+            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+            let held = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                if (i % crush === 0) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    held = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.16;
+                    b6 = white * 0.115926;
+                }
+                data[i] = held;
+            }
+        } else {
+            // Classic white noise with optional sample-rate crush hold
+            let held = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                if (i % crush === 0) {
+                    held = Math.random() * 2 - 1;
+                }
+                data[i] = held;
+            }
+        }
+
+        const noiseSrc = audioCtx.createBufferSource();
+        noiseSrc.buffer = buffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = filterType;
+        const baseCutoff = Math.min(sampleRate * 0.45, Math.max(50, freq));
+        filter.frequency.setValueAtTime(baseCutoff, time);
+        if (sweep === 1) {
+            filter.frequency.exponentialRampToValueAtTime(Math.max(50, baseCutoff * 0.25), time + Math.min(duration, decayAmt * 3));
+        } else if (sweep === -1) {
+            filter.frequency.exponentialRampToValueAtTime(Math.min(sampleRate * 0.45, baseCutoff * 3.0), time + Math.min(duration, decayAmt * 3));
+        }
+        filter.Q.setValueAtTime(resonance, time);
+
+        const env = audioCtx.createGain();
+        const peakGain = filterType === 'bandpass' ? Math.min(2.0, 0.85 + resonance * 0.05) : 0.85;
+        env.gain.setValueAtTime(0.001, time);
+        env.gain.linearRampToValueAtTime(peakGain, time + 0.004);
+        env.gain.setTargetAtTime(0.0005, time + 0.004, decayAmt);
+
+        noiseSrc.connect(filter);
+        filter.connect(env);
+        env.connect(bus);
+        routeToFxSends(env, fxActiveObj);
+
+        noiseSrc.start(time);
+        noiseSrc.stop(time + duration);
+    }
+
+    // Authentic Game Boy DMG-01 LFSR Noise Buffer Generator (15-bit white or 7-bit metallic)
+    function createGBLfsrBuffer(clockHz, duration, shortMode = false) {
+        const sr = audioCtx.sampleRate;
+        const len = Math.ceil(sr * duration);
+        const buf = audioCtx.createBuffer(1, len, sr);
+        const data = buf.getChannelData(0);
+        let lfsr = 0x7FFF;
+        const samplesPerTick = Math.max(1, sr / clockHz);
+        let counter = 0;
+        let out = 1.0;
+        for (let i = 0; i < len; i++) {
+            counter += 1;
+            if (counter >= samplesPerTick) {
+                counter -= samplesPerTick;
+                const xorBit = (lfsr & 1) ^ ((lfsr >> 1) & 1);
+                lfsr = (lfsr >> 1) | (xorBit << 14);
+                if (shortMode) {
+                    // 7-bit mode sets bit 6 as well, producing the iconic Game Boy metallic buzz
+                    lfsr = (lfsr & ~(1 << 6)) | (xorBit << 6);
+                }
+                out = (lfsr & 1) ? 0.85 : -0.85;
+            }
+            data[i] = out;
+        }
+        return buf;
+    }
+
+    function playNoise(time, type, fxActiveObj) {
+        const individualVol = drumVols[type] !== undefined ? drumVols[type] : 1.0;
+
+        // Channel 1 Hardware Frequency Sweep Drums (Kick, Tom, Laser/Coin Zap)
+        if (type === 'kick') {
+            // Iconic GB Pulse 50% rapid downward pitch sweep + tiny LFSR click
+            const osc = audioCtx.createOscillator();
+            const env = audioCtx.createGain();
+            osc.setPeriodicWave(getGBPeriodicWave('gb_pu50'));
+            osc.frequency.setValueAtTime(195, time);
+            osc.frequency.exponentialRampToValueAtTime(46, time + 0.075);
+            env.gain.setValueAtTime(1.15 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.008, time + 0.13);
+            osc.connect(env); env.connect(buses.noi);
+            routeToFxSends(env, fxActiveObj);
+            osc.start(time); osc.stop(time + 0.14);
+            return;
+        } else if (type === 'tom') {
+            // GB Channel 1 pitched sweep tom
+            const osc = audioCtx.createOscillator();
+            const env = audioCtx.createGain();
+            osc.setPeriodicWave(getGBPeriodicWave('gb_pu25'));
+            osc.frequency.setValueAtTime(250, time);
+            osc.frequency.exponentialRampToValueAtTime(82, time + 0.15);
+            env.gain.setValueAtTime(1.05 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.008, time + 0.19);
+            osc.connect(env); env.connect(buses.noi);
+            routeToFxSends(env, fxActiveObj);
+            osc.start(time); osc.stop(time + 0.21);
+            return;
+        } else if (type === 'zap') {
+            // Classic GB Pulse 12.5% arcade laser / jump sweep
+            const osc = audioCtx.createOscillator();
+            const env = audioCtx.createGain();
+            osc.setPeriodicWave(getGBPeriodicWave('gb_pu12'));
+            osc.frequency.setValueAtTime(1180, time);
+            osc.frequency.exponentialRampToValueAtTime(140, time + 0.14);
+            env.gain.setValueAtTime(0.95 * individualVol, time);
+            env.gain.linearRampToValueAtTime(0.008, time + 0.15);
+            osc.connect(env); env.connect(buses.noi);
+            routeToFxSends(env, fxActiveObj);
+            osc.start(time); osc.stop(time + 0.16);
+            return;
+        }
+
+        // Channel 4 LFSR Percussion (Snare, Closed/Open Hat, Clap, Rimshot)
+        const noise = audioCtx.createBufferSource();
+        const env = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        if (type === 'snare') {
+            // Hybrid GB Snare: short CH1 pitch snap + CH4 15-bit LFSR burst
+            const snap = audioCtx.createOscillator();
+            const snapEnv = audioCtx.createGain();
+            snap.setPeriodicWave(getGBPeriodicWave('gb_pu50'));
+            snap.frequency.setValueAtTime(260, time);
+            snap.frequency.exponentialRampToValueAtTime(115, time + 0.055);
+            snapEnv.gain.setValueAtTime(0.75 * individualVol, time);
+            snapEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.07);
+            snap.connect(snapEnv); snapEnv.connect(buses.noi);
+            routeToFxSends(snapEnv, fxActiveObj);
+            snap.start(time); snap.stop(time + 0.08);
+
+            noise.buffer = createGBLfsrBuffer(11500, 0.20, false);
+            filter.type = 'bandpass'; filter.frequency.value = 2400; filter.Q.value = 0.8;
+            env.gain.setValueAtTime(1.15 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.01, time + 0.17);
+            noise.start(time); noise.stop(time + 0.19);
+        } else if (type === 'hat') {
+            // Crisp high-clocked 15-bit LFSR tick
+            noise.buffer = createGBLfsrBuffer(32768, 0.07, false);
+            filter.type = 'highpass'; filter.frequency.value = 5500;
+            env.gain.setValueAtTime(0.65 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.01, time + 0.042);
+            noise.start(time); noise.stop(time + 0.06);
+        } else if (type === 'openhat') {
+            // Sustained high-clocked LFSR sizzle
+            noise.buffer = createGBLfsrBuffer(28000, 0.26, false);
+            filter.type = 'highpass'; filter.frequency.value = 4800;
+            env.gain.setValueAtTime(0.82 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.01, time + 0.22);
+            noise.start(time); noise.stop(time + 0.25);
+        } else if (type === 'clap') {
+            // Lower-clocked grainy LFSR burst
+            noise.buffer = createGBLfsrBuffer(8200, 0.18, false);
+            filter.type = 'bandpass'; filter.frequency.value = 1750; filter.Q.value = 1.2;
+            env.gain.setValueAtTime(1.25 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.01, time + 0.14);
+            noise.start(time); noise.stop(time + 0.17);
+        } else if (type === 'rim') {
+            // 7-bit metallic LFSR woodblock/rim click
+            noise.buffer = createGBLfsrBuffer(6400, 0.06, true);
+            filter.type = 'bandpass'; filter.frequency.value = 2800; filter.Q.value = 2.0;
+            env.gain.setValueAtTime(1.05 * individualVol, time);
+            env.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
+            noise.start(time); noise.stop(time + 0.055);
+        }
+
+        noise.connect(filter); filter.connect(env);
+        env.connect(buses.noi);
+        routeToFxSends(env, fxActiveObj);
+    }
+
+    // --- Performance Mode Handlers ---
+    const perfTarget = document.getElementById('perf_target');
+    const mpcSection = document.getElementById('mpcSection');
+    const keyboardSection = document.getElementById('keyboardSection');
+
+    perfTarget.onchange = () => {
+        if(perfTarget.value === 'drums') {
+            mpcSection.style.display = 'block';
+            keyboardSection.style.display = 'none';
+        } else {
+            mpcSection.style.display = 'none';
+            keyboardSection.style.display = 'block';
+            renderKeyboard();
+        }
+    };
+
+    function triggerPerfDrum(drumType, padEl) {
+        initAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+        playNoise(audioCtx.currentTime, drumType, { dly: false, rev: false, chs: false, dst: false });
+        
+        if(padEl) {
+            padEl.classList.add('triggered');
+            setTimeout(() => padEl.classList.remove('triggered'), 100);
+        }
+    }
+
+    function triggerPerfNote(freq, keyEl) {
+        initAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+        const target = perfTarget.value;
+        if(target === 'drums') return;
+
+        let dec = document.getElementById(target + '_dec') ? parseFloat(document.getElementById(target + '_dec').value) : 0.15;
+        if (target === 'sq3') {
+            playNoiseSynth(freq, audioCtx.currentTime, buses.sq3, dec, { dly: false, rev: false, chs: false, dst: false });
+        } else {
+            let wave = document.getElementById(target + '_wave') ? document.getElementById(target + '_wave').value : 'gb_pu50';
+            playTone(freq, audioCtx.currentTime, wave, buses[target], dec, { dly: false, rev: false, chs: false, dst: false });
+        }
+
+        if(keyEl) {
+            keyEl.classList.add('triggered');
+            setTimeout(() => keyEl.classList.remove('triggered'), 100);
+        }
+    }
+
+    document.querySelectorAll('.mpc-pad').forEach(pad => {
+        pad.onmousedown = () => triggerPerfDrum(pad.dataset.drum, pad);
+    });
+
+    window.addEventListener('keydown', e => {
+        if(!perfContainer.classList.contains('active')) return;
+        if(e.repeat) return;
+        const k = e.key.toLowerCase();
+        
+        if(perfTarget.value === 'drums') {
+            const map = { 'q': 'kick', 'w': 'snare', 'e': 'hat', 'r': 'openhat', 'a': 'clap', 's': 'rim', 'd': 'tom', 'f': 'zap' };
+            if(map[k]) {
+                const padIdx = Object.keys(map).indexOf(k);
+                const padEl = document.querySelectorAll('.mpc-pad')[padIdx];
+                triggerPerfDrum(map[k], padEl);
+            }
+        } else {
+            const keysMap = { 'z':0, 's':1, 'x':2, 'd':3, 'c':4, 'v':5, 'g':6, 'b':7, 'h':8, 'n':9, 'j':10, 'm':11 };
+            if(keysMap[k] !== undefined) {
+                const activePart = getActivePart();
+                const root = parseInt(activePart.keyRoot);
+                const scale = scales[activePart.keyMode] || scales.minor;
+                let degIdx = keysMap[k];
+                let octShift = Math.floor(degIdx / scale.length);
+                let midiVal = 48 + root + scale[degIdx % scale.length] + (octShift * 12);
+                let keyEl = document.querySelectorAll('.piano-key')[degIdx];
+                triggerPerfNote(mToF(midiVal), keyEl);
+            }
+        }
+    });
+
+    const recStartBtn = document.getElementById('recStartBtn');
+    const recStopBtn = document.getElementById('recStopBtn');
+    const perfLoopBtn = document.getElementById('perfLoopBtn');
+
+    recStartBtn.onclick = () => {
+        initAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+        isRecording = true;
+        recStartTime = audioCtx.currentTime;
+    };
+    recStopBtn.onclick = () => { isRecording = false; };
+    perfLoopBtn.onclick = () => {
+        perfLoopActive = !perfLoopActive;
+        perfLoopBtn.classList.toggle('active', perfLoopActive);
+        perfLoopBtn.innerText = perfLoopActive ? '↻ LOOPING ON' : '↻ LOOP OFF';
+    };
+
+    // --- Sequencer Logic ---
+    function scheduleNote(time) {
+        if (partOrder.length === 0 && !loopPartId) return;
+        const activeId = loopPartId || partOrder[playheadPartIdx];
+        const part = songParts[activeId];
+        if (!part) return;
+
+        const currentPartSlotKey = loopPartId ? `loop_${loopPartId}` : `slot_${playheadPartIdx}_${activeId}`;
+        if (lastPartSlotKey !== currentPartSlotKey) {
+            partElapsedSteps = 0;
+            lastPartSlotKey = currentPartSlotKey;
+        }
+
+        const numBars = Math.max(1, part.chords.length);
+        const partTotalSteps = numBars * part.timeSig;
+        const barStep = playheadStep % part.timeSig;
+        const barIndex = Math.floor(playheadStep / part.timeSig);
+        const curDegree = part.chords.length > 0 ? part.chords[barIndex] : 0;
+        const bpm = parseFloat(part.bpm || 89);
+        const stepDur = 0.25 * (60.0 / bpm);
+        updateDelayTime(bpm);
+
+        requestAnimationFrame(() => {
+            updatePartJumpLinks();
+            document.querySelectorAll('.song-timeline-block').forEach((el, idx) => {
+                el.classList.toggle('playing', !loopPartId && idx === playheadPartIdx);
+            });
+            document.querySelectorAll('.step:not(.mel-step):not(.bass-step):not(.arp-step):not(.poly-step):not(.noise-step)').forEach(el => el.classList.remove('playing'));
+            document.querySelectorAll(`#drumContainer_${activeId} .step[data-col="${barStep}"]`).forEach(el => el.classList.add('playing'));
+            document.querySelectorAll('.chord-block').forEach(el => el.classList.remove('playing'));
+            document.querySelectorAll(`#chords_${activeId} .chord-block`).forEach((el, idx) => {
+                el.classList.toggle('playing', idx === barIndex);
+            });
+        });
+
+        // Drums (Track 1 / noi)
+        if(part.tracksActive.noi) {
+            drumTracks.forEach((d, idx) => {
+                if(part.drums[idx][barStep]) {
+                    const fullIdMap = { KCK: 'kick', SNR: 'snare', HAT: 'hat', OHAT: 'openhat', CLP: 'clap', RIM: 'rim', TOM: 'tom', ZAP: 'zap' };
+                    playNoise(time, fullIdMap[d.label] || 'kick', part.fxActive.noi);
+                }
+            });
+        }
+
+        const sq1Notes = getScaleNotes(parseInt(document.getElementById('sq1_oct').value), curDegree, part.keyRoot, part.keyMode);
+        const sq2Notes = getScaleNotes(parseInt(document.getElementById('sq2_oct').value), curDegree, part.keyRoot, part.keyMode);
+        const sq3Notes = getScaleNotes(parseInt(document.getElementById('sq3_oct').value), curDegree, part.keyRoot, part.keyMode);
+        const triNotes = getScaleNotes(parseInt(document.getElementById('tri_oct').value), curDegree, part.keyRoot, part.keyMode);
+        const melNotes = getScaleNotes(parseInt(document.getElementById('mel_oct').value), curDegree, part.keyRoot, part.keyMode);
+        
+        const waves = {
+            sq1: document.getElementById('sq1_wave').value, sq2: document.getElementById('sq2_wave').value,
+            tri: document.getElementById('tri_wave').value, mel: document.getElementById('mel_wave').value
+        };
+
+        function fireTrackEvents(speedRaw, callback, baseTime, stepCounter = globalStepCounter) {
+            if (speedRaw < 1) {
+                const subdivisions = Math.round(1 / speedRaw);
+                for(let i=0; i<subdivisions; i++) {
+                    callback(baseTime + i*(stepDur/subdivisions), stepCounter * subdivisions + i);
+                }
+            } else if (stepCounter % speedRaw === 0) {
+                callback(baseTime, Math.floor(stepCounter / speedRaw));
+            }
+        }
+
+        // Track 2 (Bass)
+        if(part.tracksActive.tri) {
+            const triSpeedRaw = parseFloat(document.getElementById('tri_speed').value);
+            const triDec = parseFloat(document.getElementById('tri_dec').value);
+            fireTrackEvents(triSpeedRaw, (t, actStep) => {
+                let bStep = actStep % part.timeSig;
+                requestAnimationFrame(() => {
+                    document.querySelectorAll('.bass-step').forEach(el => el.classList.remove('playing'));
+                    document.querySelectorAll(`#bassContainer_${activeId} .bass-step[data-col="${bStep}"]`).forEach(el => el.classList.add('playing'));
+                });
+                if (part.bassData && part.bassData[bStep] !== null) {
+                    playTone(triNotes[part.bassData[bStep]], t, waves.tri, buses.tri, triDec, part.fxActive.tri);
+                }
+            }, time);
+        }
+
+        // Track 3 (Melody)
+        if(part.tracksActive.mel) {
+            const melSpeedRaw = parseFloat(document.getElementById('mel_speed').value);
+            const melDec = parseFloat(document.getElementById('mel_dec').value);
+            fireTrackEvents(melSpeedRaw, (t, actStep) => {
+                let mStep = actStep % part.timeSig;
+                requestAnimationFrame(() => {
+                    document.querySelectorAll('.mel-step').forEach(el => el.classList.remove('playing'));
+                    document.querySelectorAll(`#arpContainer_${activeId} .mel-step[data-col="${mStep}"]`).forEach(el => el.classList.add('playing'));
+                });
+                if (part.melData[mStep] !== null) {
+                    playTone(melNotes[part.melData[mStep]], t, waves.mel, buses.mel, melDec, part.fxActive.mel);
+                }
+            }, time);
+        }
+
+        function resolveDirectionalCol(monoStep, effectiveSteps, dir) {
+            const rawStep = monoStep % effectiveSteps;
+            if (dir === 'reverse') {
+                return (effectiveSteps - 1) - rawStep;
+            } else if (dir === 'pingpong') {
+                if (effectiveSteps <= 1) return 0;
+                const cycle = (effectiveSteps * 2) - 2;
+                const pos = monoStep % cycle;
+                return (pos >= effectiveSteps) ? (cycle - pos) : pos;
+            } else if (dir === 'random') {
+                return Math.floor(Math.random() * effectiveSteps);
+            }
+            return rawStep;
+        }
+
+        // Track 4 (MONO - Monophonic Independent / Time-Sig Locked Synth)
+        if(part.tracksActive.sq1) {
+            const sq1SpeedRaw = parseFloat(document.getElementById('sq1_speed').value);
+            const sq1Dec = parseFloat(document.getElementById('sq1_dec').value);
+            const sq1Dir = document.getElementById('sq1_dir').value;
+            const effectiveSteps = sq1LockTimeSig ? part.timeSig : sq1Steps;
+
+            if (sq1LockTimeSig && sq1Steps !== part.timeSig) {
+                sq1Steps = part.timeSig;
+                requestAnimationFrame(() => renderArpGrid());
+            }
+
+            const runMonoStep = (t, monoStep) => {
+                const colIdx = resolveDirectionalCol(monoStep, effectiveSteps, sq1Dir);
+
+                requestAnimationFrame(() => {
+                    document.querySelectorAll('.arp-step').forEach(el => el.classList.remove('playing'));
+                    document.querySelectorAll(`#sq1GridContainer .arp-step[data-col="${colIdx}"]`).forEach(el => el.classList.add('playing'));
+                });
+
+                if (arpSeqData[colIdx] !== null) {
+                    playTone(sq1Notes[arpSeqData[colIdx]], t, waves.sq1, buses.sq1, sq1Dec, part.fxActive.sq1);
+                }
+            };
+
+            const sq1Counter = sq1LockTimeSig ? partElapsedSteps : globalStepCounter;
+            fireTrackEvents(sq1SpeedRaw, (t, actStep) => {
+                runMonoStep(t, actStep);
+            }, time, sq1Counter);
+        }
+
+        // Track 5 (POLY - Polyphonic up to 3 notes/step Independent / Time-Sig Locked Synth)
+        if(part.tracksActive.sq2) {
+            const sq2SpeedRaw = parseFloat(document.getElementById('sq2_speed').value);
+            const sq2Dec = parseFloat(document.getElementById('sq2_dec').value);
+            const sq2Dir = document.getElementById('sq2_dir').value;
+            const effectiveSteps = sq2LockTimeSig ? part.timeSig : sq2Steps;
+
+            if (sq2LockTimeSig && sq2Steps !== part.timeSig) {
+                sq2Steps = part.timeSig;
+                requestAnimationFrame(() => renderPolyGrid());
+            }
+
+            const runPolyStep = (t, monoStep) => {
+                const colIdx = resolveDirectionalCol(monoStep, effectiveSteps, sq2Dir);
+
+                requestAnimationFrame(() => {
+                    document.querySelectorAll('.poly-step').forEach(el => el.classList.remove('playing'));
+                    document.querySelectorAll(`#sq2GridContainer .poly-step[data-col="${colIdx}"]`).forEach(el => el.classList.add('playing'));
+                });
+
+                const notesAtCol = polySeqData[colIdx];
+                if (notesAtCol && notesAtCol.length > 0) {
+                    const gainScale = notesAtCol.length > 1 ? (1 / Math.sqrt(notesAtCol.length)) : 1.0;
+                    notesAtCol.forEach(noteRow => {
+                        playTone(sq2Notes[noteRow], t, waves.sq2, buses.sq2, sq2Dec, part.fxActive.sq2, gainScale);
+                    });
+                }
+            };
+
+            const sq2Counter = sq2LockTimeSig ? partElapsedSteps : globalStepCounter;
+            fireTrackEvents(sq2SpeedRaw, (t, actStep) => {
+                runPolyStep(t, actStep);
+            }, time, sq2Counter);
+        }
+
+        // Track 6 (NOISE - Monophonic Pitched/Filtered Noise Sequencer)
+        if(part.tracksActive.sq3) {
+            const sq3SpeedRaw = parseFloat(document.getElementById('sq3_speed').value);
+            const sq3Dec = parseFloat(document.getElementById('sq3_dec').value);
+            const sq3Dir = document.getElementById('sq3_dir').value;
+            const effectiveSteps = sq3LockTimeSig ? part.timeSig : sq3Steps;
+
+            if (sq3LockTimeSig && sq3Steps !== part.timeSig) {
+                sq3Steps = part.timeSig;
+                requestAnimationFrame(() => renderNoiseGrid());
+            }
+
+            const runNoiseStep = (t, monoStep) => {
+                const colIdx = resolveDirectionalCol(monoStep, effectiveSteps, sq3Dir);
+
+                requestAnimationFrame(() => {
+                    document.querySelectorAll('.noise-step').forEach(el => el.classList.remove('playing'));
+                    document.querySelectorAll(`#sq3GridContainer .noise-step[data-col="${colIdx}"]`).forEach(el => el.classList.add('playing'));
+                });
+
+                if (noiseSeqData[colIdx] !== null) {
+                    playNoiseSynth(sq3Notes[noiseSeqData[colIdx]], t, buses.sq3, sq3Dec, part.fxActive.sq3);
+                }
+            };
+
+            const sq3Counter = sq3LockTimeSig ? partElapsedSteps : globalStepCounter;
+            fireTrackEvents(sq3SpeedRaw, (t, actStep) => {
+                runNoiseStep(t, actStep);
+            }, time, sq3Counter);
+        }
+    }
+    
+    function nextNote() {
+        const activeIdForTiming = loopPartId || partOrder[playheadPartIdx];
+        const currentPart = songParts[activeIdForTiming];
+        const bpm = parseFloat(currentPart ? currentPart.bpm : 89);
+        nextNoteTime += 0.25 * (60.0 / bpm);
+        globalStepCounter++; 
+        partElapsedSteps++;
+
+        if (partOrder.length > 0 || loopPartId) {
+            const activeId = loopPartId || partOrder[playheadPartIdx];
+            const part = songParts[activeId];
+            if (part) {
+                const numBars = Math.max(1, part.chords.length);
+                const partTotalSteps = numBars * part.timeSig;
+                playheadStep++;
+                if (playheadStep >= partTotalSteps) {
+                    playheadStep = 0;
+                    if (!loopPartId) {
+                        playheadPartIdx++;
+                        if (playheadPartIdx >= partOrder.length) playheadPartIdx = 0;
+                    }
+                }
+            }
+        }
+    }
+    
+    function scheduler() {
+        while (nextNoteTime < audioCtx.currentTime + 0.1) { scheduleNote(nextNoteTime); nextNote(); }
+        timerID = setTimeout(scheduler, 25.0);
+    }
+    
+    const playBtn = document.getElementById('playBtn');
+    function syncTransportButtons() {
+        if (isPlaying) {
+            playBtn.innerText = 'PAUSE';
+            playBtn.classList.add('active');
+        } else {
+            playBtn.innerText = 'PLAY';
+            playBtn.classList.remove('active');
+        }
+        document.querySelectorAll('.top-play-toggle').forEach(btn => {
+            btn.classList.toggle('playing', isPlaying);
+            btn.textContent = isPlaying ? '▮▮' : 'PLAY';
+            btn.title = isPlaying ? 'Pause' : 'Play';
+            btn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+        });
+    }
+
+    function togglePlayback() {
+        initAudio();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        isPlaying = !isPlaying;
+        if(isPlaying) {
+            nextNoteTime = audioCtx.currentTime + 0.05; 
+            scheduler();
+        } else {
+            clearTimeout(timerID);
+        }
+        syncTransportButtons();
+    }
+
+    playBtn.onclick = togglePlayback;
+    
+    document.getElementById('stopBtn').onclick = () => {
+        isPlaying = false;
+        clearTimeout(timerID);
+        syncTransportButtons();
+        playheadPartIdx = 0; playheadStep = 0; globalStepCounter = 0;
+        partElapsedSteps = 0; lastPartSlotKey = null;
+        updatePartJumpLinks();
+        document.querySelectorAll('.step, .song-timeline-block, .chord-block').forEach(el => el.classList.remove('playing'));
+    };
+
+    document.getElementById('stepFwdBtn').onclick = () => {
+        initAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+        if (isPlaying) return; 
+        scheduleNote(audioCtx.currentTime + 0.05); nextNote();
+    };
+
+    document.getElementById('stepBackBtn').onclick = () => {
+        initAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+        if (isPlaying) return; 
+        if (globalStepCounter === 0) return; 
+        globalStepCounter--;
+        partElapsedSteps = Math.max(0, partElapsedSteps - 1);
+        playheadStep--;
+        
+        if (playheadStep < 0) {
+            if (!loopPartId && partOrder.length > 0) {
+                playheadPartIdx--;
+                if (playheadPartIdx < 0) playheadPartIdx = partOrder.length - 1;
+                const prevPart = songParts[partOrder[playheadPartIdx]];
+                playheadStep = (Math.max(1, prevPart.chords.length) * prevPart.timeSig) - 1;
+            } else if (loopPartId) {
+                const part = songParts[loopPartId];
+                playheadStep = (Math.max(1, part.chords.length) * part.timeSig - 1);
+            }
+        }
+        scheduleNote(audioCtx.currentTime + 0.05);
+    };
+    
+    window.addEventListener('resize', () => { const cv = document.getElementById('scope'); if(cv.parentElement) cv.width = cv.parentElement.clientWidth - 40; });
+    setTimeout(() => { const cv = document.getElementById('scope'); cv.width = cv.parentElement.clientWidth - 40; }, 100);
+
+    // Initialize with a default 'Verse' part (Tracks 1-3 active; Tracks 4-6 muted)
+    createPart("Verse", 16, { sq1: false, sq2: false, sq3: false, tri: true, mel: true, noi: true });
+    partOrder.push(Object.keys(songParts)[0]);
+
+    // --- Track 4 (ARP) Melody Grid & Controls ---
+    function updateArpStepControlsUI(effectiveSteps) {
+        const stepsInput = document.getElementById('sq1_steps');
+        const stepsLabel = document.getElementById('sq1_steps_label');
+        const minusBtn = document.getElementById('sq1_steps_minus');
+        const plusBtn = document.getElementById('sq1_steps_plus');
+        const lockBtn = document.getElementById('sq1_lock_timesig');
+        if (!stepsInput) return;
+
+        stepsInput.value = effectiveSteps;
+        stepsLabel.innerText = sq1LockTimeSig ? `${effectiveSteps} - LOCKED` : `${effectiveSteps}`;
+        stepsInput.disabled = sq1LockTimeSig;
+        minusBtn.disabled = sq1LockTimeSig;
+        plusBtn.disabled = sq1LockTimeSig;
+        stepsInput.style.opacity = sq1LockTimeSig ? '0.5' : '1';
+        minusBtn.style.opacity = sq1LockTimeSig ? '0.5' : '1';
+        plusBtn.style.opacity = sq1LockTimeSig ? '0.5' : '1';
+
+        lockBtn.classList.toggle('active', sq1LockTimeSig);
+        lockBtn.innerText = sq1LockTimeSig ? 'LOCKED TO SONG PART' : 'UNLOCKED (FREE LOOP)';
+    }
+
+    function renderArpGrid() {
+        const grid = document.getElementById('sq1GridContainer');
+        if (!grid) return;
+        const prevScroll = grid.scrollLeft;
+        const effectiveSteps = sq1LockTimeSig ? getActivePart().timeSig : sq1Steps;
+        grid.style.setProperty('--steps', effectiveSteps);
+
+        const arpLabels = ['+OCT', '7', '6', '5', '4', '3', '2', 'ROOT'];
+        let gridHtml = '';
+        for (let r = 7; r >= 0; r--) {
+            gridHtml += `<div class="seq-row">
+                <div class="seq-label">${arpLabels[7 - r]}</div>`;
+            for (let c = 0; c < effectiveSteps; c++) {
+                const active = (arpSeqData[c] === r) ? 'active' : '';
+                gridHtml += `<div class="step arp-step ${active}" data-row="${r}" data-col="${c}"></div>`;
+            }
+            gridHtml += `</div>`;
+        }
+        grid.innerHTML = gridHtml;
+        grid.scrollLeft = prevScroll;
+        updateArpStepControlsUI(effectiveSteps);
+    }
+
+    document.getElementById('sq1GridContainer').addEventListener('click', e => {
+        if (e.target.classList.contains('arp-step')) {
+            const r = parseInt(e.target.dataset.row);
+            const c = parseInt(e.target.dataset.col);
+            if (arpSeqData[c] === r) {
+                arpSeqData[c] = null;
+                e.target.classList.remove('active');
+            } else {
+                arpSeqData[c] = r;
+                e.target.closest('.seq-grid').querySelectorAll(`.arp-step[data-col="${c}"]`).forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        }
+    });
+
+    document.getElementById('sq1_steps_minus').onclick = () => {
+        if (sq1LockTimeSig) return;
+        sq1Steps = Math.max(1, sq1Steps - 1);
+        renderArpGrid();
+    };
+
+    document.getElementById('sq1_steps_plus').onclick = () => {
+        if (sq1LockTimeSig) return;
+        sq1Steps = Math.min(64, sq1Steps + 1);
+        renderArpGrid();
+    };
+
+    document.getElementById('sq1_steps').onchange = (e) => {
+        if (sq1LockTimeSig) return;
+        let val = parseInt(e.target.value);
+        if (isNaN(val)) val = 8;
+        sq1Steps = Math.max(1, Math.min(64, val));
+        renderArpGrid();
+    };
+
+    document.getElementById('sq1_lock_timesig').onclick = () => {
+        sq1LockTimeSig = !sq1LockTimeSig;
+        if (sq1LockTimeSig) {
+            sq1Steps = getActivePart().timeSig;
+        }
+        renderArpGrid();
+    };
+
+    document.getElementById('clearArpGridBtn').onclick = () => {
+        if (!confirm("Clear the 04 MONO melody grid?")) return;
+        arpSeqData.fill(null);
+        renderArpGrid();
+    };
+
+    document.getElementById('toggleSq1GridBtn').onclick = (e) => {
+        const container = document.getElementById('sq1GridContainer');
+        const isHidden = container.style.display === 'none';
+        container.style.display = isHidden ? 'flex' : 'none';
+        e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+    };
+
+    // --- Track 5 (POLY) Melody Grid & Controls (Up to 3 notes per step) ---
+    function updatePolyStepControlsUI(effectiveSteps) {
+        const stepsInput = document.getElementById('sq2_steps');
+        const stepsLabel = document.getElementById('sq2_steps_label');
+        const minusBtn = document.getElementById('sq2_steps_minus');
+        const plusBtn = document.getElementById('sq2_steps_plus');
+        const lockBtn = document.getElementById('sq2_lock_timesig');
+        if (!stepsInput) return;
+
+        stepsInput.value = effectiveSteps;
+        stepsLabel.innerText = sq2LockTimeSig ? `${effectiveSteps} - LOCKED` : `${effectiveSteps}`;
+        stepsInput.disabled = sq2LockTimeSig;
+        minusBtn.disabled = sq2LockTimeSig;
+        plusBtn.disabled = sq2LockTimeSig;
+        stepsInput.style.opacity = sq2LockTimeSig ? '0.5' : '1';
+        minusBtn.style.opacity = sq2LockTimeSig ? '0.5' : '1';
+        plusBtn.style.opacity = sq2LockTimeSig ? '0.5' : '1';
+
+        lockBtn.classList.toggle('active', sq2LockTimeSig);
+        lockBtn.innerText = sq2LockTimeSig ? 'LOCKED TO SONG PART' : 'UNLOCKED (FREE LOOP)';
+    }
+
+    function renderPolyGrid() {
+        const grid = document.getElementById('sq2GridContainer');
+        if (!grid) return;
+        const prevScroll = grid.scrollLeft;
+        const effectiveSteps = sq2LockTimeSig ? getActivePart().timeSig : sq2Steps;
+        grid.style.setProperty('--steps', effectiveSteps);
+
+        const noteLabels = ['+OCT', '7', '6', '5', '4', '3', '2', 'ROOT'];
+        let gridHtml = '';
+        for (let r = 7; r >= 0; r--) {
+            gridHtml += `<div class="seq-row">
+                <div class="seq-label">${noteLabels[7 - r]}</div>`;
+            for (let c = 0; c < effectiveSteps; c++) {
+                const active = (polySeqData[c] && polySeqData[c].includes(r)) ? 'active' : '';
+                gridHtml += `<div class="step poly-step ${active}" data-row="${r}" data-col="${c}"></div>`;
+            }
+            gridHtml += `</div>`;
+        }
+        grid.innerHTML = gridHtml;
+        grid.scrollLeft = prevScroll;
+        updatePolyStepControlsUI(effectiveSteps);
+    }
+
+    document.getElementById('sq2GridContainer').addEventListener('click', e => {
+        if (e.target.classList.contains('poly-step')) {
+            const r = parseInt(e.target.dataset.row);
+            const c = parseInt(e.target.dataset.col);
+            const notesAtCol = polySeqData[c];
+            const existingIdx = notesAtCol.indexOf(r);
+            if (existingIdx !== -1) {
+                notesAtCol.splice(existingIdx, 1);
+                e.target.classList.remove('active');
+            } else {
+                if (notesAtCol.length >= 3) {
+                    const oldestRow = notesAtCol.shift();
+                    const oldestEl = e.target.closest('.seq-grid').querySelector(`.poly-step[data-col="${c}"][data-row="${oldestRow}"]`);
+                    if (oldestEl) oldestEl.classList.remove('active');
+                }
+                notesAtCol.push(r);
+                e.target.classList.add('active');
+            }
+        }
+    });
+
+    document.getElementById('sq2_steps_minus').onclick = () => {
+        if (sq2LockTimeSig) return;
+        sq2Steps = Math.max(1, sq2Steps - 1);
+        renderPolyGrid();
+    };
+
+    document.getElementById('sq2_steps_plus').onclick = () => {
+        if (sq2LockTimeSig) return;
+        sq2Steps = Math.min(64, sq2Steps + 1);
+        renderPolyGrid();
+    };
+
+    document.getElementById('sq2_steps').onchange = (e) => {
+        if (sq2LockTimeSig) return;
+        let val = parseInt(e.target.value);
+        if (isNaN(val)) val = 8;
+        sq2Steps = Math.max(1, Math.min(64, val));
+        renderPolyGrid();
+    };
+
+    document.getElementById('sq2_lock_timesig').onclick = () => {
+        sq2LockTimeSig = !sq2LockTimeSig;
+        if (sq2LockTimeSig) {
+            sq2Steps = getActivePart().timeSig;
+        }
+        renderPolyGrid();
+    };
+
+    document.getElementById('clearPolyGridBtn').onclick = () => {
+        if (!confirm("Clear the 05 POLY melody grid?")) return;
+        polySeqData = Array.from({ length: 64 }, () => []);
+        renderPolyGrid();
+    };
+
+    document.getElementById('toggleSq2GridBtn').onclick = (e) => {
+        const container = document.getElementById('sq2GridContainer');
+        const isHidden = container.style.display === 'none';
+        container.style.display = isHidden ? 'flex' : 'none';
+        e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+    };
+
+    // --- Track 6 (NOISE) Melody Grid & Controls (Monophonic) ---
+    function updateNoiseStepControlsUI(effectiveSteps) {
+        const stepsInput = document.getElementById('sq3_steps');
+        const stepsLabel = document.getElementById('sq3_steps_label');
+        const minusBtn = document.getElementById('sq3_steps_minus');
+        const plusBtn = document.getElementById('sq3_steps_plus');
+        const lockBtn = document.getElementById('sq3_lock_timesig');
+        if (!stepsInput) return;
+
+        stepsInput.value = effectiveSteps;
+        stepsLabel.innerText = sq3LockTimeSig ? `${effectiveSteps} - LOCKED` : `${effectiveSteps}`;
+        stepsInput.disabled = sq3LockTimeSig;
+        minusBtn.disabled = sq3LockTimeSig;
+        plusBtn.disabled = sq3LockTimeSig;
+        stepsInput.style.opacity = sq3LockTimeSig ? '0.5' : '1';
+        minusBtn.style.opacity = sq3LockTimeSig ? '0.5' : '1';
+        plusBtn.style.opacity = sq3LockTimeSig ? '0.5' : '1';
+
+        lockBtn.classList.toggle('active', sq3LockTimeSig);
+        lockBtn.innerText = sq3LockTimeSig ? 'LOCKED TO SONG PART' : 'UNLOCKED (FREE LOOP)';
+    }
+
+    function renderNoiseGrid() {
+        const grid = document.getElementById('sq3GridContainer');
+        if (!grid) return;
+        const prevScroll = grid.scrollLeft;
+        const effectiveSteps = sq3LockTimeSig ? getActivePart().timeSig : sq3Steps;
+        grid.style.setProperty('--steps', effectiveSteps);
+
+        const noteLabels = ['+OCT', '7', '6', '5', '4', '3', '2', 'ROOT'];
+        let gridHtml = '';
+        for (let r = 7; r >= 0; r--) {
+            gridHtml += `<div class="seq-row">
+                <div class="seq-label">${noteLabels[7 - r]}</div>`;
+            for (let c = 0; c < effectiveSteps; c++) {
+                const active = (noiseSeqData[c] === r) ? 'active' : '';
+                gridHtml += `<div class="step noise-step ${active}" data-row="${r}" data-col="${c}"></div>`;
+            }
+            gridHtml += `</div>`;
+        }
+        grid.innerHTML = gridHtml;
+        grid.scrollLeft = prevScroll;
+        updateNoiseStepControlsUI(effectiveSteps);
+    }
+
+    document.getElementById('sq3GridContainer').addEventListener('click', e => {
+        if (e.target.classList.contains('noise-step')) {
+            const r = parseInt(e.target.dataset.row);
+            const c = parseInt(e.target.dataset.col);
+            if (noiseSeqData[c] === r) {
+                noiseSeqData[c] = null;
+                e.target.classList.remove('active');
+            } else {
+                noiseSeqData[c] = r;
+                e.target.closest('.seq-grid').querySelectorAll(`.noise-step[data-col="${c}"]`).forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        }
+    });
+
+    document.getElementById('sq3_steps_minus').onclick = () => {
+        if (sq3LockTimeSig) return;
+        sq3Steps = Math.max(1, sq3Steps - 1);
+        renderNoiseGrid();
+    };
+
+    document.getElementById('sq3_steps_plus').onclick = () => {
+        if (sq3LockTimeSig) return;
+        sq3Steps = Math.min(64, sq3Steps + 1);
+        renderNoiseGrid();
+    };
+
+    document.getElementById('sq3_steps').onchange = (e) => {
+        if (sq3LockTimeSig) return;
+        let val = parseInt(e.target.value);
+        if (isNaN(val)) val = 8;
+        sq3Steps = Math.max(1, Math.min(64, val));
+        renderNoiseGrid();
+    };
+
+    document.getElementById('sq3_lock_timesig').onclick = () => {
+        sq3LockTimeSig = !sq3LockTimeSig;
+        if (sq3LockTimeSig) {
+            sq3Steps = getActivePart().timeSig;
+        }
+        renderNoiseGrid();
+    };
+
+    document.getElementById('clearNoiseGridBtn').onclick = () => {
+        if (!confirm("Clear the 06 NOISE melody grid?")) return;
+        noiseSeqData.fill(null);
+        renderNoiseGrid();
+    };
+
+    document.getElementById('toggleSq3GridBtn').onclick = (e) => {
+        const container = document.getElementById('sq3GridContainer');
+        const isHidden = container.style.display === 'none';
+        container.style.display = isHidden ? 'flex' : 'none';
+        e.target.innerText = isHidden ? '- MINIMIZE' : '+ EXPAND';
+    };
+
+    renderArpGrid();
+    renderPolyGrid();
+    renderNoiseGrid();
+    renderKeyboard();
+    renderSongProgression();
+</script>
+</body>
+</html>
