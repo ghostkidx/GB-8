@@ -97,6 +97,88 @@
             box-shadow: 4px 4px 0px rgba(155, 188, 15, 0.45);
         }
 
+    /* Cartridge / PNG Share Bar */
+    .cart-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #152213;
+      border: 4px solid var(--nes-border);
+      box-shadow: 6px 6px 0px rgba(0,0,0,0.8);
+      padding: 12px 15px;
+      max-width: 1500px;
+      margin: 0 auto 20px auto;
+      box-sizing: border-box;
+    }
+    .cart-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 240px;
+    }
+    .cart-title-group label {
+      font-size: 9px;
+      color: var(--nes-cyan);
+      white-space: nowrap;
+    }
+    #songTitleInput {
+      flex: 1;
+      min-width: 140px;
+      background: #000;
+      color: #fff;
+      border: 2px solid var(--nes-border);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 10px;
+    }
+    #songTitleInput:focus {
+      border-color: var(--nes-cyan);
+      color: #fff;
+    }
+    .cart-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #exportPngBtn {
+      border-color: var(--nes-green);
+      color: var(--nes-green);
+      background: #000;
+      padding: 8px 12px;
+      font-size: 9px;
+    }
+    #exportPngBtn:hover {
+      background: var(--nes-green);
+      color: #000;
+      border-color: #fff;
+    }
+    #importPngBtn {
+      border-color: var(--nes-cyan);
+      color: var(--nes-cyan);
+      background: #000;
+      padding: 8px 12px;
+      font-size: 9px;
+    }
+    #importPngBtn:hover {
+      background: var(--nes-cyan);
+      color: #000;
+      border-color: #fff;
+    }
+    .cart-status {
+      font-size: 8px;
+      color: var(--solo-yellow);
+      width: 100%;
+      display: none;
+      padding-top: 4px;
+    }
+    .cart-status.visible {
+      display: block;
+    }
+
         .layout { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
@@ -600,6 +682,20 @@
 <div class="mode-banner" id="modeBanner">
     <button class="mode-btn active" id="btnStudioMode">STUDIO & SONG MODE</button>
     <button class="mode-btn" id="btnPerfMode">PERFORMANCE & MPC MODE</button>
+</div>
+
+<!-- Song Title & PNG Cartridge Save/Load Bar -->
+<div class="cart-bar" id="cartBar">
+  <div class="cart-title-group">
+    <label for="songTitleInput">SONG TITLE</label>
+    <input type="text" id="songTitleInput" placeholder="UNTITLED_SONG" value="UNTITLED_SONG" maxlength="64">
+  </div>
+  <div class="cart-actions">
+    <button type="button" id="exportPngBtn" title="Save complete song & synth state to a shareable PNG cartridge">▼ EXPORT .PNG</button>
+    <button type="button" id="importPngBtn" title="Load a song & synth state from a GB-8 PNG cartridge">▲ LOAD .PNG</button>
+    <input type="file" id="importPngFile" accept="image/png,.png" style="display:none;">
+  </div>
+  <div class="cart-status" id="cartStatus"></div>
 </div>
 
 <!-- STUDIO / SONG VIEW -->
@@ -3361,6 +3457,595 @@
     renderNoiseGrid();
     renderKeyboard();
     renderSongProgression();
+
+  // =========================================================================
+  // --- GB-8 PNG CARTRIDGE EXPORT & IMPORT SYSTEM ---
+  // =========================================================================
+  const songTitleInput = document.getElementById('songTitleInput');
+  const exportPngBtn = document.getElementById('exportPngBtn');
+  const importPngBtn = document.getElementById('importPngBtn');
+  const importPngFile = document.getElementById('importPngFile');
+  const cartStatusEl = document.getElementById('cartStatus');
+
+  let statusHideTimer = null;
+  function showCartStatus(msg, isError = false) {
+    cartStatusEl.textContent = msg;
+    cartStatusEl.style.color = isError ? 'var(--nes-red)' : 'var(--solo-yellow)';
+    cartStatusEl.classList.add('visible');
+    clearTimeout(statusHideTimer);
+    statusHideTimer = setTimeout(() => {
+      cartStatusEl.classList.remove('visible');
+    }, 5000);
+  }
+
+  function sanitizeFilename(rawName) {
+    const cleaned = (rawName || '').trim()
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+      .replace(/\s+/g, '_');
+    return cleaned || 'UNTITLED_SONG';
+  }
+
+  function serializeAppState() {
+    const domInputIds = [
+      // Mixer
+      'noi_vol', 'tri_vol', 'mel_vol', 'sq1_vol', 'sq2_vol', 'sq3_vol', 'masterVol',
+      // Bass & Melo
+      'tri_wave', 'tri_oct', 'tri_speed', 'tri_dec',
+      'mel_wave', 'mel_oct', 'mel_speed', 'mel_dec',
+      // Mono (sq1)
+      'sq1_wave', 'sq1_oct', 'sq1_speed', 'sq1_dir', 'sq1_dec',
+      // Poly (sq2)
+      'sq2_wave', 'sq2_oct', 'sq2_speed', 'sq2_dir', 'sq2_dec',
+      // Noise (sq3)
+      'sq3_noise_type', 'sq3_filter_type', 'sq3_res', 'sq3_crush', 'sq3_sweep',
+      'sq3_oct', 'sq3_speed', 'sq3_dir', 'sq3_dec',
+      // FX
+      'fx_delay_time', 'fx_delay_feedback', 'fx_delay_damping', 'fx_delay_spread', 'fx_delay_mix',
+      'fx_reverb_room', 'fx_reverb_decay', 'fx_reverb_damping', 'fx_reverb_predelay', 'fx_reverb_mix',
+      'fx_chorus_rate', 'fx_chorus_depth', 'fx_chorus_feedback', 'fx_chorus_voices', 'fx_chorus_mix',
+      'fx_dist_drive', 'fx_dist_tone', 'fx_dist_symmetry', 'fx_dist_hpf', 'fx_dist_mix',
+      // Performance
+      'perf_target'
+    ];
+
+    const controls = {};
+    domInputIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) controls[id] = el.value;
+    });
+
+    return {
+      format: 'GB8-CART',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      songTitle: (songTitleInput.value || '').trim() || 'UNTITLED_SONG',
+      songParts: JSON.parse(JSON.stringify(songParts)),
+      partOrder: [...partOrder],
+      loopPartId: loopPartId,
+      drumVols: { ...drumVols },
+      isMuted: { ...isMuted },
+      isSoloed: { ...isSoloed },
+      arpSeqData: [...arpSeqData],
+      sq1Steps,
+      sq1LockTimeSig,
+      polySeqData: polySeqData.map(arr => [...arr]),
+      sq2Steps,
+      sq2LockTimeSig,
+      noiseSeqData: [...noiseSeqData],
+      sq3Steps,
+      sq3LockTimeSig,
+      perfLoops: JSON.parse(JSON.stringify(perfLoops)),
+      perfLoopActive,
+      perfLoopDuration,
+      controls
+    };
+  }
+
+  function applyAppState(state) {
+    if (!state || state.format !== 'GB8-CART' || !state.songParts) {
+      throw new Error('Invalid or unrecognized GB-8 PNG cartridge.');
+    }
+
+    // Stop active playback cleanly before swapping state
+    if (isPlaying) {
+      isPlaying = false;
+      clearTimeout(timerID);
+      syncTransportButtons();
+    }
+    playheadPartIdx = 0;
+    playheadStep = 0;
+    globalStepCounter = 0;
+    partElapsedSteps = 0;
+    lastPartSlotKey = null;
+
+    // 1. Song Title
+    const loadedTitle = (state.songTitle || 'UNTITLED_SONG').trim();
+    songTitleInput.value = loadedTitle;
+
+    // 2. Song Parts & Timeline
+    songParts = {};
+    Object.entries(state.songParts).forEach(([id, part]) => {
+      const drums = [];
+      for (let r = 0; r < drumTracks.length; r++) {
+        const srcRow = (part.drums && part.drums[r]) ? part.drums[r] : [];
+        const row = [];
+        for (let c = 0; c < 64; c++) row.push(Boolean(srcRow[c]));
+        drums.push(row);
+      }
+      const melData = Array(64).fill(null);
+      if (Array.isArray(part.melData)) {
+        for (let c = 0; c < 64; c++) melData[c] = part.melData[c] !== undefined ? part.melData[c] : null;
+      }
+      const bassData = Array(64).fill(null);
+      if (Array.isArray(part.bassData)) {
+        for (let c = 0; c < 64; c++) bassData[c] = part.bassData[c] !== undefined ? part.bassData[c] : null;
+      }
+      songParts[id] = {
+        id: part.id || id,
+        name: part.name || 'Part',
+        timeSig: parseInt(part.timeSig) || 16,
+        bpm: parseInt(part.bpm) || 86,
+        keyRoot: part.keyRoot !== undefined ? parseInt(part.keyRoot) : 4,
+        keyMode: part.keyMode || 'minor',
+        chords: Array.isArray(part.chords) ? [...part.chords] : [],
+        drums,
+        melData,
+        bassData,
+        tracksActive: Object.assign({ sq1: true, sq2: true, sq3: true, tri: true, mel: true, noi: true }, part.tracksActive || {}),
+        fxActive: {
+          sq1: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.sq1 || {}),
+          sq2: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.sq2 || {}),
+          sq3: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.sq3 || {}),
+          tri: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.tri || {}),
+          mel: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.mel || {}),
+          noi: Object.assign({ dly: false, rev: false, chs: false, dst: false }, part.fxActive?.noi || {})
+        }
+      };
+    });
+
+    partOrder = Array.isArray(state.partOrder) ? state.partOrder.filter(id => Boolean(songParts[id])) : Object.keys(songParts);
+    loopPartId = (state.loopPartId && songParts[state.loopPartId]) ? state.loopPartId : null;
+
+    // 3. Mixer Mute, Solo & Individual Drum Volumes
+    isMuted = Object.assign({ sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false }, state.isMuted || {});
+    isSoloed = Object.assign({ sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false }, state.isSoloed || {});
+    document.querySelectorAll('.mute-btn').forEach(btn => {
+      btn.classList.toggle('muted', Boolean(isMuted[btn.dataset.track]));
+    });
+    document.querySelectorAll('.solo-btn').forEach(btn => {
+      btn.classList.toggle('active', Boolean(isSoloed[btn.dataset.track]));
+    });
+
+    drumVols = Object.assign({ kick: 1.1, snare: 0.76, hat: 0.8, openhat: 0.8, clap: 1.0, rim: 0.9, tom: 1.1, zap: 0.8 }, state.drumVols || {});
+    document.querySelectorAll('.drum-fader').forEach(fader => {
+      const d = fader.dataset.drum;
+      if (drumVols[d] !== undefined) fader.value = drumVols[d];
+    });
+
+    // 4. Independent / Time-Sig Locked Sequencers (Tracks 4, 5, 6)
+    arpSeqData = Array(64).fill(null);
+    if (Array.isArray(state.arpSeqData)) {
+      for (let i = 0; i < 64; i++) arpSeqData[i] = state.arpSeqData[i] !== undefined ? state.arpSeqData[i] : null;
+    }
+    sq1Steps = parseInt(state.sq1Steps) || 16;
+    sq1LockTimeSig = state.sq1LockTimeSig !== undefined ? Boolean(state.sq1LockTimeSig) : true;
+
+    polySeqData = Array.from({ length: 64 }, () => []);
+    if (Array.isArray(state.polySeqData)) {
+      for (let i = 0; i < 64; i++) {
+        if (Array.isArray(state.polySeqData[i])) polySeqData[i] = [...state.polySeqData[i]];
+      }
+    }
+    sq2Steps = parseInt(state.sq2Steps) || 16;
+    sq2LockTimeSig = state.sq2LockTimeSig !== undefined ? Boolean(state.sq2LockTimeSig) : true;
+
+    noiseSeqData = Array(64).fill(null);
+    if (Array.isArray(state.noiseSeqData)) {
+      for (let i = 0; i < 64; i++) noiseSeqData[i] = state.noiseSeqData[i] !== undefined ? state.noiseSeqData[i] : null;
+    }
+    sq3Steps = parseInt(state.sq3Steps) || 16;
+    sq3LockTimeSig = state.sq3LockTimeSig !== undefined ? Boolean(state.sq3LockTimeSig) : true;
+
+    // 5. Performance State
+    perfLoops = state.perfLoops ? JSON.parse(JSON.stringify(state.perfLoops)) : {};
+    perfLoopActive = Boolean(state.perfLoopActive);
+    perfLoopDuration = parseFloat(state.perfLoopDuration) || 4.0;
+    perfLoopBtn.classList.toggle('active', perfLoopActive);
+    perfLoopBtn.innerText = perfLoopActive ? '↻ LOOPING ON' : '↻ LOOP OFF';
+
+    // 6. All Synth, Mixer, and FX DOM Controls
+    if (state.controls && typeof state.controls === 'object') {
+      Object.entries(state.controls).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null) {
+          el.value = val;
+        }
+      });
+    }
+
+    // Sync Live Web Audio DSP Nodes if initialized
+    updateMasterVolume();
+    if (audioCtx) {
+      Object.keys(buses).forEach(t => updateMixerGain(t));
+      updateDelayTime();
+      if (fxNodes.delayFeedback) fxNodes.delayFeedback.gain.value = parseFloat(document.getElementById('fx_delay_feedback').value);
+      if (fxNodes.delayFilter) fxNodes.delayFilter.frequency.value = parseFloat(document.getElementById('fx_delay_damping').value);
+      if (fxNodes.delayWet) fxNodes.delayWet.gain.value = parseFloat(document.getElementById('fx_delay_mix').value);
+      updateReverbImpulse();
+      if (fxNodes.reverbWet) fxNodes.reverbWet.gain.value = parseFloat(document.getElementById('fx_reverb_mix').value);
+      if (fxNodes.chorusDelay) fxNodes.chorusDelay.delayTime.value = parseFloat(document.getElementById('fx_chorus_depth').value);
+      if (fxNodes.chorusWet) fxNodes.chorusWet.gain.value = parseFloat(document.getElementById('fx_chorus_mix').value);
+      if (fxNodes.distShaper) fxNodes.distShaper.curve = makeDistortionCurve(parseFloat(document.getElementById('fx_dist_drive').value));
+      if (fxNodes.distFilter) fxNodes.distFilter.frequency.value = parseFloat(document.getElementById('fx_dist_tone').value);
+      if (fxNodes.distWet) fxNodes.distWet.gain.value = parseFloat(document.getElementById('fx_dist_mix').value);
+    }
+
+    // Sync Performance Target View
+    if (perfTarget.value === 'drums') {
+      mpcSection.style.display = 'block';
+      keyboardSection.style.display = 'none';
+    } else {
+      mpcSection.style.display = 'none';
+      keyboardSection.style.display = 'block';
+    }
+
+    // Re-render all UI panels & grids
+    renderPartPool();
+    renderSongProgression();
+    renderParts();
+    renderArpGrid();
+    renderPolyGrid();
+    renderNoiseGrid();
+    renderKeyboard();
+    updatePartJumpLinks();
+  }
+
+  // --- PNG Chunk & Pixel Steganography Encoder / Decoder ---
+  const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const CHUNK_TYPE = 'gb8S';
+  const MAGIC_BYTES = [71, 66, 56, 33];
+
+  const crcTable = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) {
+      crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function createPngChunk(typeStr, dataBytes) {
+    const typeBytes = new TextEncoder().encode(typeStr);
+    const len = dataBytes.length;
+    const chunk = new Uint8Array(12 + len);
+    const view = new DataView(chunk.buffer);
+    view.setUint32(0, len, false);
+    chunk.set(typeBytes, 4);
+    chunk.set(dataBytes, 8);
+
+    const crcInput = new Uint8Array(4 + len);
+    crcInput.set(typeBytes, 0);
+    crcInput.set(dataBytes, 4);
+    view.setUint32(8 + len, crc32(crcInput), false);
+    return chunk;
+  }
+
+  function injectChunkIntoPng(pngBytes, typeStr, payloadBytes) {
+    for (let i = 0; i < 8; i++) {
+      if (pngBytes[i] !== PNG_SIGNATURE[i]) throw new Error('Generated buffer is not a valid PNG.');
+    }
+    let offset = 8;
+    let iendOffset = -1;
+    const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
+    while (offset + 12 <= pngBytes.length) {
+      const length = view.getUint32(offset, false);
+      const type = String.fromCharCode(
+        pngBytes[offset + 4],
+        pngBytes[offset + 5],
+        pngBytes[offset + 6],
+        pngBytes[offset + 7]
+      );
+      if (type === 'IEND') {
+        iendOffset = offset;
+        break;
+      }
+      offset += 12 + length;
+    }
+    if (iendOffset === -1) throw new Error('PNG IEND chunk not found.');
+
+    const customChunk = createPngChunk(typeStr, payloadBytes);
+    const result = new Uint8Array(pngBytes.length + customChunk.length);
+    result.set(pngBytes.subarray(0, iendOffset), 0);
+    result.set(customChunk, iendOffset);
+    result.set(pngBytes.subarray(iendOffset), iendOffset + customChunk.length);
+    return result;
+  }
+
+  function extractChunkFromPng(pngBytes, typeStr) {
+    if (pngBytes.length < 24) return null;
+    for (let i = 0; i < 8; i++) {
+      if (pngBytes[i] !== PNG_SIGNATURE[i]) return null;
+    }
+    let offset = 8;
+    const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
+    while (offset + 12 <= pngBytes.length) {
+      const length = view.getUint32(offset, false);
+      if (offset + 12 + length > pngBytes.length) break;
+      const type = String.fromCharCode(
+        pngBytes[offset + 4],
+        pngBytes[offset + 5],
+        pngBytes[offset + 6],
+        pngBytes[offset + 7]
+      );
+      if (type === typeStr) {
+        return pngBytes.subarray(offset + 8, offset + 8 + length);
+      }
+      offset += 12 + length;
+    }
+    return null;
+  }
+
+  // Render a console-authentic Cartridge PNG with embedded data strip + lossless PNG chunk
+  async function buildCartridgePngBlob(stateObj) {
+    const jsonStr = JSON.stringify(stateObj);
+    const payloadBytes = new TextEncoder().encode(jsonStr);
+
+    const stripTotalBytes = 8 + payloadBytes.length;
+    const pixelsNeeded = Math.ceil(stripTotalBytes / 3);
+    const width = 480;
+    const artHeight = 250;
+    const dataRows = Math.max(4, Math.ceil(pixelsNeeded / width));
+    const height = artHeight + dataRows;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    const firstPartId = stateObj.partOrder[0] || Object.keys(stateObj.songParts)[0];
+    const firstPart = stateObj.songParts[firstPartId];
+    const bpmText = firstPart ? `${firstPart.bpm} BPM` : '86 BPM';
+    const keyText = firstPart ? `${keyNames[firstPart.keyRoot] || 'E'} ${(firstPart.keyMode || 'minor').toUpperCase()}` : 'E MINOR';
+    const partsCount = Object.keys(stateObj.songParts).length;
+    const titleDisplay = (stateObj.songTitle || 'UNTITLED_SONG').toUpperCase();
+
+    // --- Draw Authentic Game Boy DMG-01 Cartridge Artwork ---
+    ctx.fillStyle = '#0F1A0F';
+    ctx.fillRect(0, 0, width, artHeight);
+
+    // DMG-01 Classic Grey Cartridge Shell (centered)
+    const cartX = 96, cartY = 10, cartW = 288, cartH = 232;
+    ctx.fillStyle = '#9A9E96';
+    ctx.fillRect(cartX, cartY + 12, cartW, cartH - 12);
+    ctx.fillRect(cartX, cartY, cartW - 22, 16);
+    // Top-right corner notch characteristic of Game Boy carts
+    ctx.fillStyle = '#6D716A';
+    ctx.fillRect(cartX + cartW - 22, cartY + 12, 22, 6);
+
+    // Outer bevel highlight & shadow
+    ctx.fillStyle = '#B8BCB4';
+    ctx.fillRect(cartX, cartY, cartW - 22, 4);
+    ctx.fillRect(cartX, cartY, 4, cartH);
+    ctx.fillStyle = '#656962';
+    ctx.fillRect(cartX + cartW - 4, cartY + 12, 4, cartH - 12);
+
+    // Side grip notches (left & right ridges)
+    ctx.fillStyle = '#5A5E57';
+    for (let y = 52; y <= 188; y += 10) {
+      ctx.fillRect(cartX - 4, y, 6, 5);
+      ctx.fillRect(cartX + cartW - 2, y, 6, 5);
+    }
+
+    // Top raised oval header bar ("NINTENDO GAME BOY" style pill)
+    ctx.fillStyle = '#7E827A';
+    ctx.fillRect(cartX + 26, cartY + 12, cartW - 56, 22);
+    ctx.strokeStyle = '#585C55';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cartX + 26, cartY + 12, cartW - 56, 22);
+    ctx.fillStyle = '#C2C6BE';
+    ctx.font = 'bold 8px "Press Start 2P", monospace';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DOT MATRIX STEREO', cartX + 54, cartY + 23);
+
+    // Recessed sticker label frame
+    const lblX = cartX + 24, lblY = cartY + 42, lblW = cartW - 48, lblH = 148;
+    ctx.fillStyle = '#1B2B18';
+    ctx.fillRect(lblX, lblY, lblW, lblH);
+    ctx.strokeStyle = '#306230';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(lblX + 1.5, lblY + 1.5, lblW - 3, lblH - 3);
+
+    // Red/magenta DMG-01 stripe accent & olive LCD header bar
+    ctx.fillStyle = '#9B2257';
+    ctx.fillRect(lblX + 6, lblY + 6, lblW - 12, 5);
+    ctx.fillStyle = '#9BBC0F';
+    ctx.fillRect(lblX + 6, lblY + 13, lblW - 12, 26);
+
+    ctx.fillStyle = '#0F1A0F';
+    ctx.font = 'bold 14px "Press Start 2P", monospace';
+    ctx.fillText('GB-8', lblX + 14, lblY + 27);
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.fillText('DMG-CART', lblX + 148, lblY + 27);
+
+    // Song Title on DMG-01 Label
+    ctx.fillStyle = '#E0F0C8';
+    ctx.font = '9px "Press Start 2P", monospace';
+    const maxChars = 22;
+    const line1 = titleDisplay.slice(0, maxChars);
+    const line2 = titleDisplay.slice(maxChars, maxChars * 2);
+    ctx.fillText(line1, lblX + 12, lblY + 54);
+    if (line2) {
+      ctx.fillText(line2, lblX + 12, lblY + 70);
+    }
+
+    // Metadata summary
+    ctx.fillStyle = '#9BBC0F';
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.fillText(`PARTS: ${partsCount} | ${bpmText}`, lblX + 12, lblY + 92);
+    ctx.fillStyle = '#C4D64A';
+    ctx.fillText(`KEY: ${keyText}`, lblX + 12, lblY + 107);
+
+    // 4-shade DMG-01 dot-matrix visualizer bars
+    const gbShades = ['#306230', '#5A7348', '#8BAC0F', '#9BBC0F'];
+    for (let i = 0; i < 16; i++) {
+      const bx = lblX + 12 + i * 13.5;
+      const activeH = 6 + ((i * 7 + partsCount * 5) % 22);
+      ctx.fillStyle = gbShades[(i + partsCount) % gbShades.length];
+      ctx.fillRect(bx, lblY + lblH - 10 - activeH, 10, activeH);
+    }
+
+    // Bottom Game Boy downward triangle & connector recess
+    ctx.fillStyle = '#6D716A';
+    ctx.beginPath();
+    ctx.moveTo(cartX + cartW / 2 - 14, lblY + lblH + 8);
+    ctx.lineTo(cartX + cartW / 2 + 14, lblY + lblH + 8);
+    ctx.lineTo(cartX + cartW / 2, lblY + lblH + 22);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#0F1A0F';
+    ctx.fillRect(cartX + 44, artHeight - 10, cartW - 88, 10);
+
+    // --- Write Raw RGB Data Strip at Bottom of Image ---
+    const stripBuffer = new Uint8Array(pixelsNeeded * 3);
+    stripBuffer[0] = MAGIC_BYTES[0];
+    stripBuffer[1] = MAGIC_BYTES[1];
+    stripBuffer[2] = MAGIC_BYTES[2];
+    stripBuffer[3] = MAGIC_BYTES[3];
+    const stripView = new DataView(stripBuffer.buffer);
+    stripView.setUint32(4, payloadBytes.length, false);
+    stripBuffer.set(payloadBytes, 8);
+
+    const imgData = ctx.createImageData(width, dataRows);
+    const px = imgData.data;
+    for (let p = 0; p < width * dataRows; p++) {
+      const sIdx = p * 3;
+      const dIdx = p * 4;
+      px[dIdx]     = sIdx < stripBuffer.length ? stripBuffer[sIdx] : 0;
+      px[dIdx + 1] = sIdx + 1 < stripBuffer.length ? stripBuffer[sIdx + 1] : 0;
+      px[dIdx + 2] = sIdx + 2 < stripBuffer.length ? stripBuffer[sIdx + 2] : 0;
+      px[dIdx + 3] = 255;
+    }
+    ctx.putImageData(imgData, 0, artHeight);
+
+    const rawBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const rawArrayBuf = await rawBlob.arrayBuffer();
+    const rawPngBytes = new Uint8Array(rawArrayBuf);
+    const finalPngBytes = injectChunkIntoPng(rawPngBytes, CHUNK_TYPE, payloadBytes);
+
+    return new Blob([finalPngBytes], { type: 'image/png' });
+  }
+
+  async function decodeCartridgePngFile(file) {
+    const arrayBuf = await file.arrayBuffer();
+    const pngBytes = new Uint8Array(arrayBuf);
+
+    // Method 1: Fast lossless extraction from custom PNG ancillary chunk
+    const chunkBytes = extractChunkFromPng(pngBytes, CHUNK_TYPE);
+    if (chunkBytes) {
+      const jsonStr = new TextDecoder().decode(chunkBytes);
+      return JSON.parse(jsonStr);
+    }
+
+    // Method 2: Fallback extraction from the RGB pixel data strip at the bottom of the image
+    const bitmapUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Unable to read PNG image.'));
+        image.src = bitmapUrl;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const artHeight = 250;
+      if (img.height <= artHeight) {
+        throw new Error('This PNG does not contain GB-8 cartridge data.');
+      }
+
+      const dataRows = img.height - artHeight;
+      const imgData = ctx.getImageData(0, artHeight, img.width, dataRows).data;
+      const totalPixels = img.width * dataRows;
+      const rawBytes = new Uint8Array(totalPixels * 3);
+      for (let p = 0; p < totalPixels; p++) {
+        rawBytes[p * 3]     = imgData[p * 4];
+        rawBytes[p * 3 + 1] = imgData[p * 4 + 1];
+        rawBytes[p * 3 + 2] = imgData[p * 4 + 2];
+      }
+
+      if (rawBytes[0] !== MAGIC_BYTES[0] || rawBytes[1] !== MAGIC_BYTES[1] || rawBytes[2] !== MAGIC_BYTES[2] || rawBytes[3] !== MAGIC_BYTES[3]) {
+        throw new Error('This PNG does not contain valid GB-8 song data.');
+      }
+
+      const view = new DataView(rawBytes.buffer);
+      const payloadLen = view.getUint32(4, false);
+      if (payloadLen <= 0 || 8 + payloadLen > rawBytes.length) {
+        throw new Error('Corrupted GB-8 data strip in PNG.');
+      }
+
+      const payloadSlice = rawBytes.subarray(8, 8 + payloadLen);
+      const jsonStr = new TextDecoder().decode(payloadSlice);
+      return JSON.parse(jsonStr);
+    } finally {
+      URL.revokeObjectURL(bitmapUrl);
+    }
+  }
+
+  exportPngBtn.onclick = async () => {
+    try {
+      const stateObj = serializeAppState();
+      const safeFilename = sanitizeFilename(stateObj.songTitle) + '.png';
+      const pngBlob = await buildCartridgePngBlob(stateObj);
+
+      const url = URL.createObjectURL(pngBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      showCartStatus(`SAVED CARTRIDGE: ${safeFilename}`);
+    } catch (err) {
+      console.error(err);
+      showCartStatus('EXPORT FAILED: ' + err.message, true);
+    }
+  };
+
+  importPngBtn.onclick = () => {
+    importPngFile.value = '';
+    importPngFile.click();
+  };
+
+  importPngFile.onchange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const stateObj = await decodeCartridgePngFile(file);
+      applyAppState(stateObj);
+      showCartStatus(`LOADED SONG: "${stateObj.songTitle || 'UNTITLED_SONG'}"`);
+    } catch (err) {
+      console.error(err);
+      showCartStatus('LOAD FAILED: ' + err.message, true);
+    }
+  };
 </script>
 </body>
 </html>
