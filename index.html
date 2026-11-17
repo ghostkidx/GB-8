@@ -513,6 +513,52 @@
         .solo-btn.active { background: var(--solo-yellow); color: #000; border-color: #fff; }
         .mute-btn { width: 90%; font-size: 8px; background: #333; padding: 8px 0; border: 2px solid #555; color: #888;}
         .mute-btn.muted { background: var(--nes-red); color: #fff; border-color: #fff; }
+        .pan-btn-group {
+            display: flex;
+            gap: 2px;
+            width: 90%;
+            justify-content: center;
+        }
+        .pan-btn {
+            flex: 1;
+            font-size: 7px;
+            background: #222;
+            padding: 5px 0;
+            border: 1px solid #555;
+            color: #888;
+            text-align: center;
+        }
+        .pan-btn.active {
+            background: var(--nes-cyan);
+            color: #000;
+            border-color: #fff;
+        }
+        .drum-pan-group {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .drum-pan-btn {
+            flex: 1;
+            font-size: 6px;
+            background: #1a1a1a;
+            padding: 4px 0;
+            border: 1px solid #444;
+            color: #777;
+            text-align: center;
+        }
+        .drum-pan-btn.active {
+            background: var(--nes-cyan);
+            color: #000;
+            border-color: #fff;
+        }
+        .seq-title-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
         input[type="range"].fader { 
             -webkit-appearance: slider-vertical; 
             width: 25px; 
@@ -791,31 +837,61 @@
             <div class="mixer-strip">
                 <span class="strip-label" style="color:#fff">01 DRUM</span>
                 <button class="solo-btn" data-track="noi">SOLO</button><button class="mute-btn" data-track="noi">MUTE</button>
+                <div class="pan-btn-group" data-track="noi">
+                    <button type="button" class="pan-btn" data-track="noi" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="noi" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="noi" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="noi_vol" class="fader" min="0" max="1.5" step="0.01" value="1.5">
             </div>
             <div class="mixer-strip">
                 <a href="#panel_tri" class="strip-label tri-color">02 BASS</a>
                 <button class="solo-btn" data-track="tri">SOLO</button><button class="mute-btn" data-track="tri">MUTE</button>
+                <div class="pan-btn-group" data-track="tri">
+                    <button type="button" class="pan-btn" data-track="tri" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="tri" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="tri" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="tri_vol" class="fader" min="0" max="1.2" step="0.01" value="1.14">
             </div>
             <div class="mixer-strip">
                 <a href="#panel_mel" class="strip-label mel-color">03 MELO</a>
                 <button class="solo-btn" data-track="mel">SOLO</button><button class="mute-btn" data-track="mel">MUTE</button>
+                <div class="pan-btn-group" data-track="mel">
+                    <button type="button" class="pan-btn" data-track="mel" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="mel" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="mel" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="mel_vol" class="fader" min="0" max="1.2" step="0.01" value="0.34">
             </div>
             <div class="mixer-strip">
                 <a href="#panel_sq1" class="strip-label sq1-color">04 MONO</a>
                 <button class="solo-btn" data-track="sq1">SOLO</button><button class="mute-btn" data-track="sq1">MUTE</button>
+                <div class="pan-btn-group" data-track="sq1">
+                    <button type="button" class="pan-btn" data-track="sq1" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="sq1" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="sq1" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="sq1_vol" class="fader" min="0" max="1.2" step="0.01" value="0.25">
             </div>
             <div class="mixer-strip">
                 <a href="#panel_sq2" class="strip-label sq2-color">05 POLY</a>
                 <button class="solo-btn" data-track="sq2">SOLO</button><button class="mute-btn" data-track="sq2">MUTE</button>
+                <div class="pan-btn-group" data-track="sq2">
+                    <button type="button" class="pan-btn" data-track="sq2" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="sq2" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="sq2" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="sq2_vol" class="fader" min="0" max="1.2" step="0.01" value="0.28">
             </div>
             <div class="mixer-strip">
                 <a href="#panel_sq3" class="strip-label sq3-color">06 NOISE</a>
                 <button class="solo-btn" data-track="sq3">SOLO</button><button class="mute-btn" data-track="sq3">MUTE</button>
+                <div class="pan-btn-group" data-track="sq3">
+                    <button type="button" class="pan-btn" data-track="sq3" data-pan="L" title="Left Channel">L</button>
+                    <button type="button" class="pan-btn active" data-track="sq3" data-pan="C" title="Center Channel">C</button>
+                    <button type="button" class="pan-btn" data-track="sq3" data-pan="R" title="Right Channel">R</button>
+                </div>
                 <input type="range" id="sq3_vol" class="fader" min="0" max="1.2" step="0.01" value="1.0">
             </div>
         </div>
@@ -836,14 +912,14 @@
                 <button id="toggleDrumSlidersBtn" style="font-size:8px; padding:2px 6px;">+ EXPAND DRUM VOLUMES</button>
             </div>
             <div id="drumSlidersContainer" class="drum-channel-sliders" style="display:none;">
-                <div class="drum-slider-strip"><label>KCK</label><input type="range" class="drum-fader" data-drum="kick" min="0" max="1.5" step="0.01" value="1.1"></div>
-                <div class="drum-slider-strip"><label>SNR</label><input type="range" class="drum-fader" data-drum="snare" min="0" max="1.5" step="0.01" value="0.76"></div>
-                <div class="drum-slider-strip"><label>HAT</label><input type="range" class="drum-fader" data-drum="hat" min="0" max="1.5" step="0.01" value="0.8"></div>
-                <div class="drum-slider-strip"><label>OHAT</label><input type="range" class="drum-fader" data-drum="openhat" min="0" max="1.5" step="0.01" value="0.8"></div>
-                <div class="drum-slider-strip"><label>CLP</label><input type="range" class="drum-fader" data-drum="clap" min="0" max="1.5" step="0.01" value="1.0"></div>
-                <div class="drum-slider-strip"><label>RIM</label><input type="range" class="drum-fader" data-drum="rim" min="0" max="1.5" step="0.01" value="0.9"></div>
-                <div class="drum-slider-strip"><label>TOM</label><input type="range" class="drum-fader" data-drum="tom" min="0" max="1.5" step="0.01" value="1.1"></div>
-                <div class="drum-slider-strip"><label>ZAP</label><input type="range" class="drum-fader" data-drum="zap" min="0" max="1.5" step="0.01" value="0.8"></div>
+                <div class="drum-slider-strip"><label>KCK</label><input type="range" class="drum-fader" data-drum="kick" min="0" max="1.5" step="0.01" value="1.1"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="kick" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="kick" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="kick" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>SNR</label><input type="range" class="drum-fader" data-drum="snare" min="0" max="1.5" step="0.01" value="0.76"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="snare" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="snare" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="snare" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>HAT</label><input type="range" class="drum-fader" data-drum="hat" min="0" max="1.5" step="0.01" value="0.8"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="hat" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="hat" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="hat" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>OHAT</label><input type="range" class="drum-fader" data-drum="openhat" min="0" max="1.5" step="0.01" value="0.8"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="openhat" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="openhat" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="openhat" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>CLP</label><input type="range" class="drum-fader" data-drum="clap" min="0" max="1.5" step="0.01" value="1.0"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="clap" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="clap" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="clap" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>RIM</label><input type="range" class="drum-fader" data-drum="rim" min="0" max="1.5" step="0.01" value="0.9"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="rim" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="rim" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="rim" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>TOM</label><input type="range" class="drum-fader" data-drum="tom" min="0" max="1.5" step="0.01" value="1.1"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="tom" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="tom" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="tom" data-pan="R">R</button></div></div>
+                <div class="drum-slider-strip"><label>ZAP</label><input type="range" class="drum-fader" data-drum="zap" min="0" max="1.5" step="0.01" value="0.8"><div class="drum-pan-group"><button type="button" class="drum-pan-btn" data-drum="zap" data-pan="L">L</button><button type="button" class="drum-pan-btn active" data-drum="zap" data-pan="C">C</button><button type="button" class="drum-pan-btn" data-drum="zap" data-pan="R">R</button></div></div>
             </div>
         </div>
         </div>
@@ -1232,8 +1308,11 @@
     // Audio Context & FX Nodes
     let audioCtx, masterGain, dmgStageFilter, dmgOutputComp, analyser;
     let buses = {};
+    let panners = {};
     let fxNodes = {};
     let drumVols = { kick: 1.1, snare: 0.76, hat: 0.8, openhat: 0.8, clap: 1.0, rim: 0.9, tom: 1.1, zap: 0.8 };
+    let trackPans = { sq1: 'C', sq2: 'C', sq3: 'C', tri: 'C', mel: 'C', noi: 'C' };
+    let drumPans = { kick: 'C', snare: 'C', hat: 'C', openhat: 'C', clap: 'C', rim: 'C', tom: 'C', zap: 'C' };
     let isMuted = { sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false };
     let isSoloed = { sq1: false, sq2: false, sq3: false, tri: false, mel: false, noi: false };
 
@@ -1730,7 +1809,11 @@
         return `
             <div class="seq-block" style="margin-top:15px;">
                 <div class="seq-block-header">
-                    <div style="font-size:8px; color:${def.color};">${def.label} PATTERN${subHint}</div>
+                    <div class="seq-title-group">
+                        <span style="font-size:8px; color:${def.color};">${def.label} PATTERN${subHint}</span>
+                        <button type="button" class="remove-inst-btn" data-id="${part.id}" data-inst="${instKey}" style="font-size:8px; padding:2px 6px; color:var(--nes-magenta); border-color:var(--nes-magenta);" title="Delete ${def.label} from this song part">DEL</button>
+                        <button type="button" class="clear-inst-btn" data-id="${part.id}" data-inst="${instKey}" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);" title="Reset ${def.label} pattern">RESET</button>
+                    </div>
                     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                         <div class="seq-step-controls" title="Number of steps in this sequence">
                             <span>STEPS</span>
@@ -1738,9 +1821,7 @@
                             <input type="number" class="inst-steps-input" data-id="${part.id}" data-inst="${instKey}" min="1" max="64" value="${stepsCount}">
                             <button type="button" class="inst-steps-plus" data-id="${part.id}" data-inst="${instKey}">+</button>
                         </div>
-                        <button type="button" class="clear-inst-btn" data-id="${part.id}" data-inst="${instKey}" style="font-size:8px; padding:2px 6px; color:var(--nes-red); border-color:var(--nes-red);">CLEAR</button>
                         <button type="button" class="toggle-inst-grid-btn" data-id="${part.id}" data-inst="${instKey}" style="font-size:8px; padding:2px 6px;">${isMin ? '+ EXPAND' : '- MINIMIZE'}</button>
-                        <button type="button" class="remove-inst-btn" data-id="${part.id}" data-inst="${instKey}" style="font-size:8px; padding:2px 6px; color:var(--nes-magenta); border-color:var(--nes-magenta);" title="Remove ${def.label} from this song part">✕ REMOVE</button>
                     </div>
                 </div>
                 <div id="instContainer_${part.id}_${instKey}" class="seq-grid" style="--steps: ${stepsCount}; display: ${isMin ? 'none' : 'flex'};">
@@ -1877,6 +1958,8 @@
                         </div>
                     </div>
 
+                    ${gridsHtml}
+
                     <div class="add-inst-bar">
                         <select class="add-inst-select" data-id="${part.id}" ${availableToAdd.length === 0 ? 'disabled' : ''}>
                             ${addInstOptionsHtml}
@@ -1884,8 +1967,6 @@
                         <button type="button" class="add-inst-btn" data-id="${part.id}" ${availableToAdd.length === 0 ? 'disabled' : ''}>+ INST</button>
                         <span style="font-size:7px; color:#888;">(MAX 1 OF EACH INSTRUMENT PER PART)</span>
                     </div>
-
-                    ${gridsHtml}
                 </div>
             `;
             container.appendChild(panel);
@@ -2100,7 +2181,9 @@
             const id = e.target.dataset.id;
             const inst = e.target.dataset.inst;
             const part = songParts[id];
-            if (!part) return;
+            const def = INST_DEFS.find(d => d.id === inst);
+            if (!part || !def) return;
+            if (!confirm(`Delete ${def.label} from "${part.name}"?`)) return;
             part.addedInsts = part.addedInsts.filter(k => k !== inst);
             renderParts();
         }
@@ -2126,7 +2209,7 @@
             const part = songParts[id];
             const def = INST_DEFS.find(d => d.id === inst);
             if (!part || !def) return;
-            if (!confirm(`Clear ${def.label} pattern in "${part.name}"?`)) return;
+            if (!confirm(`Reset ${def.label} pattern in "${part.name}"?`)) return;
 
             if (inst === 'noi') part.drums.forEach(row => row.fill(false));
             else if (inst === 'tri') part.bassData.fill(null);
@@ -2377,6 +2460,50 @@
         const trk = e.target.id.split('_')[0]; if(audioCtx) updateMixerGain(trk);
     });
 
+    function panCodeToValue(code) {
+        if (code === 'L') return -1;
+        if (code === 'R') return 1;
+        return 0;
+    }
+
+    function updateTrackPan(track) {
+        if (!audioCtx || !panners[track]) return;
+        const val = panCodeToValue(trackPans[track] || 'C');
+        panners[track].pan.setTargetAtTime(val, audioCtx.currentTime, 0.015);
+    }
+
+    function syncPanButtonsUI() {
+        document.querySelectorAll('.pan-btn').forEach(btn => {
+            const trk = btn.dataset.track;
+            const p = btn.dataset.pan;
+            btn.classList.toggle('active', (trackPans[trk] || 'C') === p);
+        });
+        document.querySelectorAll('.drum-pan-btn').forEach(btn => {
+            const drm = btn.dataset.drum;
+            const p = btn.dataset.pan;
+            btn.classList.toggle('active', (drumPans[drm] || 'C') === p);
+        });
+    }
+
+    document.querySelectorAll('.pan-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const trk = e.target.dataset.track;
+            const pan = e.target.dataset.pan;
+            trackPans[trk] = pan;
+            syncPanButtonsUI();
+            if (audioCtx) updateTrackPan(trk);
+        };
+    });
+
+    document.querySelectorAll('.drum-pan-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const drm = e.target.dataset.drum;
+            const pan = e.target.dataset.pan;
+            drumPans[drm] = pan;
+            syncPanButtonsUI();
+        };
+    });
+
     function updateMasterVolume() {
         const slider = document.getElementById('masterVol');
         const label = document.getElementById('masterVolVal');
@@ -2403,7 +2530,11 @@
         masterGain.gain.value = parseFloat(document.getElementById('masterVol').value);
         
         ['sq1', 'sq2', 'sq3', 'tri', 'mel', 'noi'].forEach(t => {
-            buses[t] = audioCtx.createGain(); buses[t].connect(masterGain);
+            buses[t] = audioCtx.createGain();
+            panners[t] = audioCtx.createStereoPanner();
+            panners[t].pan.value = panCodeToValue(trackPans[t] || 'C');
+            buses[t].connect(panners[t]);
+            panners[t].connect(masterGain);
         });
 
         // --- Build Advanced FX DSP Nodes with Wet/Dry Mix Busses ---
@@ -2770,6 +2901,9 @@
 
     function playNoise(time, type, fxActiveObj) {
         const individualVol = drumVols[type] !== undefined ? drumVols[type] : 1.0;
+        const drumOut = audioCtx.createStereoPanner();
+        drumOut.pan.setValueAtTime(panCodeToValue(drumPans[type] || 'C'), time);
+        drumOut.connect(drumOut);
 
         if (type === 'kick') {
             const osc = audioCtx.createOscillator();
@@ -2787,7 +2921,7 @@
             env.gain.setValueAtTime(0.35 * individualVol, time + 0.0625);
             env.gain.setValueAtTime(0.0001, time + 0.095);
 
-            osc.connect(env); env.connect(buses.noi);
+            osc.connect(env); env.connect(drumOut);
             routeToFxSends(env, fxActiveObj);
             osc.start(time); osc.stop(time + 0.105);
 
@@ -2796,7 +2930,7 @@
             click.buffer = createGBLfsrBuffer(16384, 0.03, false);
             clickEnv.gain.setValueAtTime(0.45 * individualVol, time);
             clickEnv.gain.setValueAtTime(0.0001, time + 0.015625);
-            click.connect(clickEnv); clickEnv.connect(buses.noi);
+            click.connect(clickEnv); clickEnv.connect(drumOut);
             click.start(time); click.stop(time + 0.025);
             return;
         } else if (type === 'tom') {
@@ -2808,7 +2942,7 @@
                 osc.frequency.setValueAtTime(f, time + idx * (1 / 64));
             });
             scheduleDMGEnvelope(env.gain, time, 1.0 * individualVol, 0.045, false);
-            osc.connect(env); env.connect(buses.noi);
+            osc.connect(env); env.connect(drumOut);
             routeToFxSends(env, fxActiveObj);
             osc.start(time); osc.stop(time + 0.25);
             return;
@@ -2821,7 +2955,7 @@
                 osc.frequency.setValueAtTime(f, time + i * (1 / 128));
             }
             scheduleDMGEnvelope(env.gain, time, 0.9 * individualVol, 0.035, false);
-            osc.connect(env); env.connect(buses.noi);
+            osc.connect(env); env.connect(drumOut);
             routeToFxSends(env, fxActiveObj);
             osc.start(time); osc.stop(time + 0.20);
             return;
@@ -2839,7 +2973,7 @@
             snapEnv.gain.setValueAtTime(0.72 * individualVol, time);
             snapEnv.gain.setValueAtTime(0.32 * individualVol, time + 0.015625);
             snapEnv.gain.setValueAtTime(0.0001, time + 0.046875);
-            snap.connect(snapEnv); snapEnv.connect(buses.noi);
+            snap.connect(snapEnv); snapEnv.connect(drumOut);
             routeToFxSends(snapEnv, fxActiveObj);
             snap.start(time); snap.stop(time + 0.055);
 
@@ -2881,7 +3015,7 @@
         }
 
         noise.connect(filter); filter.connect(env);
-        env.connect(buses.noi);
+        env.connect(drumOut);
         routeToFxSends(env, fxActiveObj);
     }
 
@@ -3335,6 +3469,8 @@
             partOrder: [...partOrder],
             loopPartId: loopPartId,
             drumVols: { ...drumVols },
+            trackPans: { ...trackPans },
+            drumPans: { ...drumPans },
             isMuted: { ...isMuted },
             isSoloed: { ...isSoloed },
             perfLoops: JSON.parse(JSON.stringify(perfLoops)),
@@ -3465,6 +3601,13 @@
             const d = fader.dataset.drum;
             if (drumVols[d] !== undefined) fader.value = drumVols[d];
         });
+
+        trackPans = Object.assign({ sq1: 'C', sq2: 'C', sq3: 'C', tri: 'C', mel: 'C', noi: 'C' }, state.trackPans || {});
+        drumPans = Object.assign({ kick: 'C', snare: 'C', hat: 'C', openhat: 'C', clap: 'C', rim: 'C', tom: 'C', zap: 'C' }, state.drumPans || {});
+        syncPanButtonsUI();
+        if (audioCtx) {
+            Object.keys(panners).forEach(t => updateTrackPan(t));
+        }
 
         perfLoops = state.perfLoops ? JSON.parse(JSON.stringify(state.perfLoops)) : {};
         perfLoopActive = Boolean(state.perfLoopActive);
