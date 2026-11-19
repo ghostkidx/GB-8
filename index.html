@@ -2903,7 +2903,7 @@
         const individualVol = drumVols[type] !== undefined ? drumVols[type] : 1.0;
         const drumOut = audioCtx.createStereoPanner();
         drumOut.pan.setValueAtTime(panCodeToValue(drumPans[type] || 'C'), time);
-        drumOut.connect(drumOut);
+        drumOut.connect(buses.noi);
 
         if (type === 'kick') {
             const osc = audioCtx.createOscillator();
